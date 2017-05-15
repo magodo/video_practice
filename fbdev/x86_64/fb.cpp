@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include <iostream>
 #include <sstream>
@@ -153,6 +154,12 @@ int main()
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
     vinfo.grayscale = 0;
     vinfo.bits_per_pixel = 32;
+
+    vinfo.xres = 1024;
+    vinfo.yres = 720;
+    vinfo.xres_virtual = 800;
+    vinfo.yres_virtual = 600;
+
     vinfo.nonstd = V4L2_PIX_FMT_RGB32; 
 
     ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vinfo);
