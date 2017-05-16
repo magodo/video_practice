@@ -11,9 +11,17 @@ namespace Fbdev
             ImplFbDev();
             ~ImplFbDev();
 
-            void drawPixel(int x, int y, uint32_t clr_rgb24);
+            void drawPixel(int x, int y, uint32_t color);
             inline uint32_t getXRes() { return m_vinfo.xres_virtual; }
             inline uint32_t getYRes() { return m_vinfo.yres_virtual; }
+            
+            // Convert rgb24 to other pix_fmt whose r/g/b length is less/equal to 8-bits
+            // note: this API will largely reduce performance, to be used modestly
+            uint32_t colorFromRGB24(uint32_t clr_rgb24);
+            
+            // Convert other pix_fmt whose r/g/b length is less/equal to 8-bits to rgb24
+            // note: this API will largely reduce performance, to be used modestly
+            uint32_t colorToRGB24(uint32_t color);
 
             virtual bool init(std::string dev);
             virtual bool uninit();
@@ -22,6 +30,8 @@ namespace Fbdev
             virtual bool setLocalAlpha();
             virtual bool setColorKey(uint32_t color_key);
             virtual bool unsetColorKey();
+            virtual bool blank();
+            virtual bool unBlank();
 
         private:
             const uint32_t m_default_pix_fmt;
@@ -35,7 +45,6 @@ namespace Fbdev
             uint32_t m_fb_size;
 
             uint32_t bppOfFmt(uint32_t pix_fmt);
-            uint32_t colorFromRGB24(uint32_t clr_rgb24);
     };
 };
 

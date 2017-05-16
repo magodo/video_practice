@@ -1,1 +1,0 @@
-/home/uidj4668/github/video_practice/fbdev/imx6x-std-armv7a/FbdevWrapper/build/CMakeFiles/FbdevWrapper.dir

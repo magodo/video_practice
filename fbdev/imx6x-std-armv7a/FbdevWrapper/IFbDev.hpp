@@ -86,6 +86,21 @@ namespace Fbdev
              * @return      true if success, false otherwise.
              */
             virtual bool unsetColorKey() = 0;
+
+            /**
+             * @brief       Set fb to be blank.
+             *
+             * @return      true if success, false otherwise.
+             * @note        if current fb is background, then the overlay fb will be blank also
+             */
+            virtual bool blank() = 0;
+
+            /**
+             * @brief       Set fb to be unblank
+             *
+             * @return      true if success, false otherwise.
+             */
+            virtual bool unBlank() = 0;
     };
 
 };

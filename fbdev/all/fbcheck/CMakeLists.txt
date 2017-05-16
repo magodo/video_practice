@@ -8,8 +8,8 @@
 ##########################
 
 cmake_minimum_required (VERSION 2.6)
-project (demo_link)
-set (exe demo_link)
+project (fbcheck)
+set (exe fbcheck)
 
 # Check if trigered by bitbake
 # (if triggered manually, "ADK_PREFIX" env.var. is always defined)
@@ -25,21 +25,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # where to find headers
 include_directories(${PROJECT_SOURCE_DIR}/inc/
                     ${adk_root}/usr/include/
-                    ${PROJECT_SOURCE_DIR}/../FbdevWrapper/
                     )
                     
 # where to find libs
 link_directories(${adk_root}/usr/lib/
-    ${PROJECT_SOURCE_DIR}/../FbdevWrapper/build
 )
 
 # source files
 add_executable(${exe}
-${PROJECT_SOURCE_DIR}/demo_link.cpp
+${PROJECT_SOURCE_DIR}/fbcheck.cpp
 )
-
-# link
-target_link_libraries(${exe} FbdevWrapper)
-
-# install (just for removing rpath)
-install (TARGETS ${exe} RUNTIME DESTINATION ${PROJECT_SOURCE_DIR} )

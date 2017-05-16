@@ -5,6 +5,7 @@
  ************************************************************************/
 
 #include <iostream>
+#include <cmath>
 
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -38,19 +39,16 @@ uint32_t ImplFbDev::bppOfFmt(uint32_t pix_fmt)
         case PixFmt::RGB565:
             return 16;
         default:
-            cerr << "Unknown format: " << (char*)(&pix_fmt) << endl;
+            char tmp[5] = {0};
+            for (int i = 0; i < 4; ++i)
+                tmp[i] = *((uint8_t*)(&pix_fmt)+i);
+            cerr << "Unknown format: " << tmp << endl;
             return 0;
     }
 }
 
-uint32_t ImplFbDev::colorFromRGB24(uint32_t clr_rgb24)
-{
-    return (( (uint8_t)((double)(clr_rgb24>>16 & 0xff)/0xff * ((2^m_vinfo.red.length)  -1))   << m_vinfo.red.offset ) |
-            ( (uint8_t)((double)(clr_rgb24>> 8 & 0xff)/0xff * ((2^m_vinfo.green.length)-1))   << m_vinfo.green.offset ) |
-            ( (uint8_t)((double)(clr_rgb24>> 0 & 0xff)/0xff * ((2^m_vinfo.blue.length) -1))   << m_vinfo.blue.offset ));
-}
-
 /********* PUBLIC ************/
+
 
 ImplFbDev::ImplFbDev():
     m_default_pix_fmt(PixFmt::RGB565),
@@ -68,7 +66,7 @@ ImplFbDev::ImplFbDev():
 ImplFbDev::~ImplFbDev()
 { /* empty */ }
 
-void ImplFbDev::drawPixel(int x, int y, uint32_t clr_rgb24)
+void ImplFbDev::drawPixel(int x, int y, uint32_t color)
 {
     int offset = (x+m_vinfo.xoffset) * m_vinfo.bits_per_pixel/8 + (y+m_vinfo.yoffset) * m_finfo.line_length;
 
@@ -78,7 +76,7 @@ void ImplFbDev::drawPixel(int x, int y, uint32_t clr_rgb24)
             // TODO
             break;
         case PixFmt::RGB565:
-            *((uint16_t*)(m_fb_buf+offset)) = (uint16_t)colorFromRGB24(clr_rgb24);
+            *((uint16_t*)(m_fb_buf+offset)) = (uint16_t)(color);
             break;
         default:
             cerr << "current pixel format is not supported!" << endl;
@@ -86,8 +84,47 @@ void ImplFbDev::drawPixel(int x, int y, uint32_t clr_rgb24)
     }
 }
 
+uint32_t ImplFbDev::colorFromRGB24(uint32_t clr_rgb24)
+{
+
+    uint32_t color;
+    color = (((uint8_t)((double)(clr_rgb24>>16 & 0xff)/0xff * (pow(2, m_vinfo.red.length)  -1))   << m_vinfo.red.offset ) |
+            ( (uint8_t)((double)(clr_rgb24>> 8 & 0xff)/0xff * (pow(2, m_vinfo.green.length)-1))   << m_vinfo.green.offset ) |
+            ( (uint8_t)((double)(clr_rgb24>> 0 & 0xff)/0xff * (pow(2, m_vinfo.blue.length) -1))   << m_vinfo.blue.offset ));
+
+#ifdef DEBUG
+    static unsigned counter = 0;
+    ++counter;
+
+    // output the transfered color once
+    if (counter == m_vinfo.xres_virtual*m_vinfo.yres_virtual)
+    {
+        char tmp[5] = {0};
+        for (int i = 0; i < 4; ++i)
+            tmp[i] = *((uint8_t*)(&m_vinfo.nonstd)+i);
+        cout << hex << "color: 0x" << clr_rgb24 << "(rgb24) -> 0x"  << color << "(" << tmp << ")" << endl;
+        cout << dec;
+        counter = 0;
+    }
+#endif
+
+    return color;
+}
+
+uint32_t ImplFbDev::colorToRGB24(uint32_t color)
+{
+    uint32_t clr_rgb24;
+
+    clr_rgb24 = (((uint8_t)((double)(color>>m_vinfo.red.offset   & (uint8_t)(pow(2,m_vinfo.red.length)-1))    /(pow(2,m_vinfo.red.length)-1)   * 0xff) << 16) |
+                 ((uint8_t)((double)(color>>m_vinfo.green.offset & (uint8_t)(pow(2,m_vinfo.green.length)-1))/(pow(2,m_vinfo.green.length)-1) * 0xff) << 8) |
+                 ((uint8_t)((double)(color>>m_vinfo.blue.offset  & (uint8_t)(pow(2,m_vinfo.blue.length)-1))  /(pow(2,m_vinfo.blue.length)-1)  * 0xff) << 0));
+    return clr_rgb24;
+
+}
+
 bool ImplFbDev::init(string dev)
 {
+
     /* open device */
 
     m_fd = open(dev.c_str(), O_RDWR);
@@ -104,13 +141,6 @@ bool ImplFbDev::init(string dev)
         cerr << "Get var screen info failed: " << strerror(errno) << endl;
         return false;
     }
-
-    m_vinfo.xres = m_vinfo.xres_virtual = m_default_width;
-    m_vinfo.yres = m_vinfo.yres_virtual = m_default_height;
-
-    if (!(m_vinfo.bits_per_pixel = bppOfFmt(m_default_pix_fmt)))
-        return false;
-    m_vinfo.nonstd = m_default_pix_fmt;
 
     if (0 != ioctl(m_fd, FBIOPUT_VSCREENINFO, &m_vinfo))
     {
@@ -256,13 +286,13 @@ bool ImplFbDev::setLocalAlpha()
     return true;
 }
 
-bool ImplFbDev::setColorKey(uint32_t color_key)
+bool ImplFbDev::setColorKey(uint32_t color)
 {
     CHECK_INVOC_ORDER;
 
     struct mxcfb_color_key ckey;
     ckey.enable = 1;
-    ckey.color_key = color_key;
+    ckey.color_key = colorToRGB24(color);
 
     if (0 != ioctl(m_fd, MXCFB_SET_CLR_KEY, &ckey))
     {
@@ -283,6 +313,32 @@ bool ImplFbDev::unsetColorKey()
     if (0 != ioctl(m_fd, MXCFB_SET_CLR_KEY, &ckey))
     {
         cerr << "Set color key failed: " << strerror(errno) << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool ImplFbDev::blank()
+{
+    CHECK_INVOC_ORDER;
+
+    if (0 != ioctl(m_fd, FBIOBLANK, FB_BLANK_NORMAL))
+    {
+        cerr << "Blank failed: " << strerror(errno) << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool ImplFbDev::unBlank()
+{
+    CHECK_INVOC_ORDER;
+
+    if (0 != ioctl(m_fd, FBIOBLANK, FB_BLANK_UNBLANK))
+    {
+        cerr << "Blank failed: " << strerror(errno) << endl;
         return false;
     }
 

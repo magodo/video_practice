@@ -1,1 +1,0 @@
-/home/uidj4668/github/Linux_Video/fb/simple_demo/build/CMakeFiles/DrawFoobar.dir
