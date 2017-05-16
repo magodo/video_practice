@@ -26,6 +26,7 @@ namespace Fbdev
     {
         const uint32_t UYVY     fourcc('U','Y','V','Y');
         const uint32_t RGB565   fourcc('R','G','B','P');
+        const uint32_t RGB32    fourcc('R','G','B','4');
     };
 
     class IFbDev

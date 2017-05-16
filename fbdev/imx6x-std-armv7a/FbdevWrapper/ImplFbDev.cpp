@@ -35,7 +35,7 @@ uint32_t ImplFbDev::bppOfFmt(uint32_t pix_fmt)
     switch (pix_fmt)
     {
         case PixFmt::UYVY:
-            return 16;
+            return 32;
         case PixFmt::RGB565:
             return 16;
         default:
@@ -44,43 +44,6 @@ uint32_t ImplFbDev::bppOfFmt(uint32_t pix_fmt)
                 tmp[i] = *((uint8_t*)(&pix_fmt)+i);
             cerr << "Unknown format: " << tmp << endl;
             return 0;
-    }
-}
-
-/********* PUBLIC ************/
-
-
-ImplFbDev::ImplFbDev():
-    m_default_pix_fmt(PixFmt::RGB565),
-    m_default_width(1280),
-    m_default_height(720),
-    m_fd(-1),
-    m_fb_buf(NULL),
-    m_fb_size(0)
-{
-    memset(&m_finfo, 0, sizeof(struct fb_fix_screeninfo));
-    memset(&m_vinfo, 0, sizeof(struct fb_var_screeninfo));
-}
-
-
-ImplFbDev::~ImplFbDev()
-{ /* empty */ }
-
-void ImplFbDev::drawPixel(int x, int y, uint32_t color)
-{
-    int offset = (x+m_vinfo.xoffset) * m_vinfo.bits_per_pixel/8 + (y+m_vinfo.yoffset) * m_finfo.line_length;
-
-    switch (m_vinfo.nonstd)
-    {
-        case PixFmt::UYVY:
-            // TODO
-            break;
-        case PixFmt::RGB565:
-            *((uint16_t*)(m_fb_buf+offset)) = (uint16_t)(color);
-            break;
-        default:
-            cerr << "current pixel format is not supported!" << endl;
-            break;
     }
 }
 
@@ -121,6 +84,46 @@ uint32_t ImplFbDev::colorToRGB24(uint32_t color)
     return clr_rgb24;
 
 }
+
+/********* PUBLIC ************/
+
+
+ImplFbDev::ImplFbDev():
+    m_default_pix_fmt(PixFmt::RGB565),
+    m_default_width(1280),
+    m_default_height(720),
+    m_fd(-1),
+    m_fb_buf(NULL),
+    m_fb_size(0)
+{
+    memset(&m_finfo, 0, sizeof(struct fb_fix_screeninfo));
+    memset(&m_vinfo, 0, sizeof(struct fb_var_screeninfo));
+}
+
+
+ImplFbDev::~ImplFbDev()
+{ /* empty */ }
+
+void ImplFbDev::drawPixel(int x, int y, uint32_t pix_content)
+{
+    int offset = (x+m_vinfo.xoffset) * m_vinfo.bits_per_pixel/8 + (y+m_vinfo.yoffset) * m_finfo.line_length;
+
+    switch (m_vinfo.nonstd)
+    {
+        case PixFmt::UYVY:
+            // only draw the even pixels
+            if (x % 2 == 0)
+                *((uint32_t*)(m_fb_buf+offset)) = pix_content;
+            break;
+        case PixFmt::RGB565:
+            *((uint16_t*)(m_fb_buf+offset)) = (uint16_t)(pix_content);
+            break;
+        default:
+            cerr << "current pixel format is not supported!" << endl;
+            break;
+    }
+}
+
 
 bool ImplFbDev::init(string dev)
 {
@@ -265,7 +268,17 @@ bool ImplFbDev::setLocalAlpha()
     struct mxcfb_loc_alpha loc_alpha;
 
     loc_alpha.enable = 1;
-    loc_alpha.alpha_in_pixel = 0; // TODO: check wheter need to set this for fmt having in pixel alpha, e.g. RGB32
+
+    switch (m_vinfo.nonstd)
+    {
+        case PixFmt::RGB565:
+            loc_alpha.alpha_in_pixel = 0;
+            break;
+        case PixFmt::RGB32:
+            loc_alpha.alpha_in_pixel = 1;
+            break;
+    }
+    
     if (0 != ioctl(m_fd, MXCFB_SET_LOC_ALPHA, &loc_alpha))
     {
         cerr << "Set local alpha failed: " << strerror(errno) << endl;
@@ -286,13 +299,14 @@ bool ImplFbDev::setLocalAlpha()
     return true;
 }
 
+// Note: the input "color" is of current pixel format of fb
 bool ImplFbDev::setColorKey(uint32_t color)
 {
     CHECK_INVOC_ORDER;
 
     struct mxcfb_color_key ckey;
     ckey.enable = 1;
-    ckey.color_key = colorToRGB24(color);
+    ckey.color_key = colorToRGB24(color); // seems mxcfb is always using rgb24 for clr_key setting
 
     if (0 != ioctl(m_fd, MXCFB_SET_CLR_KEY, &ckey))
     {
