@@ -1,9 +1,10 @@
 #ifndef IMPL_FBDEV_HPP
 #define IMPL_FBDEV_HPP
 
+#include <stdint.h>
 #include "IFbDev.hpp"
 
-namespace Fbdev
+namespace fbdev
 {
     class ImplFbDev: public IFbDev
     {
@@ -27,7 +28,7 @@ namespace Fbdev
             inline uint32_t getYRes() { return m_vinfo.yres_virtual; }
             
             virtual bool init(std::string dev);
-            virtual bool uninit();
+            virtual bool deinit();
             virtual bool setPixFormat(uint32_t pix_fmt);
             virtual bool setGlobalAlpha(uint16_t alpha);
             virtual bool setLocalAlpha();

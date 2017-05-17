@@ -31,5 +31,6 @@ link_directories(${adk_root}/usr/lib/)
 # source files
 add_library(FbdevWrapper SHARED
     ${PROJECT_SOURCE_DIR}/ImplFbDev.cpp
+    ${PROJECT_SOURCE_DIR}/IFbDev.cpp
 )
 

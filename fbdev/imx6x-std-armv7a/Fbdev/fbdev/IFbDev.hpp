@@ -19,10 +19,10 @@
 	((uint32_t)(a) | ((uint32_t)(b) << 8) | ((uint32_t)(c) << 16) | ((uint32_t)(d) << 24))
 #define fource_be(a,b,c,d) (fourcc(a,b,c,d) | (1<<31))
 
-namespace Fbdev
+namespace fbdev
 {
 
-    namespace PixFmt
+    namespace pixfmt
     {
         const uint32_t UYVY     fourcc('U','Y','V','Y');
         const uint32_t RGB565   fourcc('R','G','B','P');
@@ -32,6 +32,10 @@ namespace Fbdev
     class IFbDev
     {
         public:
+
+            static IFbDev* getInstance();
+
+            virtual ~IFbDev();
 
             /**
              * @brief       Open fb and set default screen info.
@@ -46,7 +50,7 @@ namespace Fbdev
              *
              * @return      true if success, false otherwise.
              */
-            virtual bool uninit() = 0;
+            virtual bool deinit() = 0;
 
             /**
              * @brief       Set pixel format of opened fb.

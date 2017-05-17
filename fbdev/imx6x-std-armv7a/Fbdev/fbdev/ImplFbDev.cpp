@@ -16,7 +16,7 @@
 
 #include "ImplFbDev.hpp"
 
-using namespace Fbdev;
+using namespace fbdev;
 using namespace std;
 
 #define CHECK_INVOC_ORDER \
@@ -34,9 +34,9 @@ uint32_t ImplFbDev::bppOfFmt(uint32_t pix_fmt)
 {
     switch (pix_fmt)
     {
-        case PixFmt::UYVY:
+        case pixfmt::UYVY:
             return 32;
-        case PixFmt::RGB565:
+        case pixfmt::RGB565:
             return 16;
         default:
             char tmp[5] = {0};
@@ -89,7 +89,7 @@ uint32_t ImplFbDev::colorToRGB24(uint32_t color)
 
 
 ImplFbDev::ImplFbDev():
-    m_default_pix_fmt(PixFmt::RGB565),
+    m_default_pix_fmt(pixfmt::RGB565),
     m_default_width(1280),
     m_default_height(720),
     m_fd(-1),
@@ -110,12 +110,12 @@ void ImplFbDev::drawPixel(int x, int y, uint32_t pix_content)
 
     switch (m_vinfo.nonstd)
     {
-        case PixFmt::UYVY:
+        case pixfmt::UYVY:
             // only draw the even pixels
             if (x % 2 == 0)
                 *((uint32_t*)(m_fb_buf+offset)) = pix_content;
             break;
-        case PixFmt::RGB565:
+        case pixfmt::RGB565:
             *((uint16_t*)(m_fb_buf+offset)) = (uint16_t)(pix_content);
             break;
         default:
@@ -177,7 +177,7 @@ bool ImplFbDev::init(string dev)
     return true;
 }
 
-bool ImplFbDev::uninit()
+bool ImplFbDev::deinit()
 {
     CHECK_INVOC_ORDER;
 
@@ -271,10 +271,10 @@ bool ImplFbDev::setLocalAlpha()
 
     switch (m_vinfo.nonstd)
     {
-        case PixFmt::RGB565:
+        case pixfmt::RGB565:
             loc_alpha.alpha_in_pixel = 0;
             break;
-        case PixFmt::RGB32:
+        case pixfmt::RGB32:
             loc_alpha.alpha_in_pixel = 1;
             break;
     }
