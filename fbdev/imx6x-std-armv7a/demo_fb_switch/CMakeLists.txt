@@ -8,8 +8,8 @@
 ##########################
 
 cmake_minimum_required (VERSION 2.6)
-project (new_demo)
-set (exe new_demo)
+project (fb_switch)
+set (exe fb_switch)
 
 # Check if trigered by bitbake
 # (if triggered manually, "ADK_PREFIX" env.var. is always defined)
@@ -23,14 +23,14 @@ endif (DEFINED ENV{ADK_PREFIX})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # where to find headers
-include_directories(${PROJECT_SOURCE_DIR}/../Fbdev/fbbl/
+include_directories(${PROJECT_SOURCE_DIR}/../video_service/FbControl/fbbl/
                     ${adk_root}/usr/include/
-                    ${PROJECT_SOURCE_DIR}/../Fbdev/fbdev/
+                    ${PROJECT_SOURCE_DIR}/../video_service/FbControl/fbdev/
                     )
                     
 # where to find libs
 link_directories(${adk_root}/usr/lib/
-    ${PROJECT_SOURCE_DIR}/../Fbdev/build
+    ${PROJECT_SOURCE_DIR}/../video_service/FbControl/build
 )
 
 # source files

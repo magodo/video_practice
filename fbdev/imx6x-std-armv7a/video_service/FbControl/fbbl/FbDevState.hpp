@@ -2,31 +2,21 @@
 #define FBDEVSTATE_HPP
 
 #include "FbDevBL.hpp"
-#include "IFbDev.hpp"
-
-using namespace fbdev;
 
 namespace vehicle
 {
 namespace videoservice
 {
+    // forwar declare
     class FbDevBL;
 
     class FbDevState
     {
         public:
-
-            bool init();
-            bool deinit();
-
+            virtual inline ~FbDevState() {}
             virtual inline bool toHome(FbDevBL& bl) {return true;}
-            virtual inline bool toAnimation(FbDevBL& bl) {return true;}
-            virtual inline bool toCamera(FbDevBL& bl) {return true;}
-            virtual ~FbDevState();
-
-        protected:
-            static IFbDev* fb0_;
-            static IFbDev* fb1_;
+            virtual inline bool toAnimation(FbDevBL& bl){return true;}
+            virtual inline bool toCamera(FbDevBL& bl){return true;}
     };
 
     class FbDevStateHome: public FbDevState

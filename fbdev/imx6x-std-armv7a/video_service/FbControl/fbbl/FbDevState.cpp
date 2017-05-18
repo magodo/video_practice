@@ -8,38 +8,12 @@
 
 using namespace vehicle::videoservice;
 
-// Base
-
-IFbDev *FbDevState::fb0_;
-IFbDev *FbDevState::fb1_;
-
-bool FbDevState::init()
-{
-    fb0_ = IFbDev::getInstance();
-    fb1_ = IFbDev::getInstance();
-
-    return (fb0_->init("/dev/fb0") && fb1_->init("/dev/fb1"));
-}
-
-bool FbDevState::deinit()
-{
-    if (!fb0_->deinit() || !fb1_->deinit()) 
-        return false;
-
-    delete fb0_;
-    delete fb1_;
-
-    return true;
-}
-
-FbDevState::~FbDevState()
-{}
-
 // Home
 
 bool FbDevStateHome::toAnimation(FbDevBL& bl)
 {
-    fb1_->unBlank();
+    bl.fb1_->setGlobalAlpha(0xff);
+    bl.fb1_->unBlank();
 
     bl.setCurrentState(new FbDevStateAnimation);
     delete this;
@@ -50,9 +24,10 @@ bool FbDevStateHome::toAnimation(FbDevBL& bl)
 
 bool FbDevStateHome::toCamera(FbDevBL& bl)
 {
-    fb0_->setLocalAlpha();
-    fb1_->unBlank();
-    fb0_->setColorKey(bl.getColorKey());
+    bl.fb1_->setGlobalAlpha(0xff);
+    bl.fb0_->setLocalAlpha();
+    bl.fb0_->setColorKey(bl.getColorKey());
+    bl.fb1_->unBlank();
 
     bl.setCurrentState(new FbDevStateCamera);
     delete this;
@@ -64,7 +39,7 @@ bool FbDevStateHome::toCamera(FbDevBL& bl)
 
 bool FbDevStateAnimation::toHome(FbDevBL& bl)
 {
-    fb1_->blank();
+    bl.fb1_->blank();
 
     bl.setCurrentState(new FbDevStateHome);
     delete this;
@@ -74,8 +49,8 @@ bool FbDevStateAnimation::toHome(FbDevBL& bl)
 
 bool FbDevStateAnimation::toCamera(FbDevBL& bl)
 {
-    fb0_->setColorKey(bl.getColorKey());
-    fb0_->setLocalAlpha();
+    bl.fb0_->setColorKey(bl.getColorKey());
+    bl.fb0_->setLocalAlpha();
 
     bl.setCurrentState(new FbDevStateCamera);
     delete this;
@@ -87,9 +62,8 @@ bool FbDevStateAnimation::toCamera(FbDevBL& bl)
 
 bool FbDevStateCamera::toHome(FbDevBL& bl)
 {
-    fb0_->unsetColorKey();
-    fb1_->blank();
-    fb1_->setGlobalAlpha(0xff);
+    bl.fb0_->unsetColorKey();
+    bl.fb1_->blank();
 
     bl.setCurrentState(new FbDevStateHome);
     delete this;
@@ -99,8 +73,8 @@ bool FbDevStateCamera::toHome(FbDevBL& bl)
 
 bool FbDevStateCamera::toAnimation(FbDevBL& bl)
 {
-    fb1_->setGlobalAlpha(0xff);
-    fb0_->unsetColorKey();
+    bl.fb0_->unsetColorKey();
+    bl.fb1_->setGlobalAlpha(0xff);
 
     bl.setCurrentState(new FbDevStateAnimation);
     delete this;

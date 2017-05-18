@@ -12,14 +12,14 @@ using namespace fbdev;
 
 /********* PUBLIC ************/
 
-bool FbDevBL::init()
+FbDevBL::FbDevBL():
+    state_(new FbDevStateHome), // home is init state
+    color_key_(0x000000) // RGB Black
 {
-    return state_->init();
-}
-
-bool FbDevBL::deinit()
-{
-    return state_->deinit();
+    fb0_ = IFbDev::getInstance();
+    fb1_ = IFbDev::getInstance();
+    fb0_->init("/dev/fb0");
+    fb1_->init("/dev/fb1");
 }
 
 bool FbDevBL::setFb(FbState state)
@@ -43,10 +43,10 @@ void FbDevBL::setCurrentState(FbDevState *state)
 
 /********* PRIVATE ************/
 
-FbDevBL::FbDevBL():
-    state_(new FbDevStateHome), // home is init state
-    color_key_(0x000000) // RGB Black
-{}
-
 FbDevBL::~FbDevBL()
-{}
+{
+    fb0_->deinit();
+    fb1_->deinit();
+    delete fb0_;
+    delete fb1_;
+}

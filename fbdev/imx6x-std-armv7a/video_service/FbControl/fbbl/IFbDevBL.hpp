@@ -23,23 +23,16 @@ namespace videoservice
             static IFbDevBL *getInstance();
 
             /**
-             * @brief       open and configure frame buffers
-             * @return      true if success, false otherwise.
-             */
-            virtual bool init() = 0;
-
-            /**
-             * @brief       close frame buffers
-             * @return      true if success, false otherwise.
-             */
-            virtual bool deinit() = 0;
-
-            /**
              * @brief       set FBs to a specific state(defined by product)
              * @param[in]   FB state
              * @return      true if success, false otherwise.
              */
             virtual bool setFb(FbState state) = 0;
+
+        protected:
+
+            // avoid directly new its ineritances
+            IFbDevBL() {}
     };
 };
 };

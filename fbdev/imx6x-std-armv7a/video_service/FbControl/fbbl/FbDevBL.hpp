@@ -1,9 +1,12 @@
 #ifndef FBDEVBL_HPP
 #define FBDEVBL_HPP
 
+#include "IFbDev.hpp"
 #include "IFbDevBL.hpp"
 #include "FbDevState.hpp"
 #include <stdint.h>
+
+using namespace fbdev;
 
 namespace vehicle
 {
@@ -20,9 +23,12 @@ namespace videoservice
             void setCurrentState(FbDevState *state);
             inline uint32_t getColorKey() {return color_key_;}
 
-            virtual bool init();
-            virtual bool deinit();
             virtual bool setFb(FbState state);
+
+        public:
+
+            IFbDev* fb0_;
+            IFbDev* fb1_;
 
         private:
 

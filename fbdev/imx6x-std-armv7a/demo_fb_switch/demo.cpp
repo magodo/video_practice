@@ -14,8 +14,6 @@ int main(int argc, char *argv[])
 {
     IFbDevBL *obj =  IFbDevBL::getInstance();
 
-    obj->init();
-
     int choice;
 
     while (choice)
@@ -36,6 +34,4 @@ int main(int argc, char *argv[])
                 break;
         }
     }
-
-    obj->deinit();
 }
