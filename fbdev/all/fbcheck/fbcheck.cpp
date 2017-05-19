@@ -16,6 +16,7 @@
 #include <sys/mman.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <iostream>
 #include <sstream>
@@ -181,7 +182,19 @@ int main(int argc, char *argv[])
 
     // var info
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
-    ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
+    ioctl(fb_fd, FBIOGET_FSCREENINFO, &finfo);
     show_vinfo(&vinfo);
     show_finfo(&finfo);
+
+#if 0
+/**
+ * This part is for proving when setting 24 for bits_per_pixel, the actual bits_per_pixel is 32
+ */
+    vinfo.bits_per_pixel = 24;
+    vinfo.nonstd = V4L2_PIX_FMT_RGB32;   
+    vinfo.activate = FB_ACTIVATE_NOW;
+    ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vinfo);
+    ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
+    show_vinfo(&vinfo);
+#endif
 }
