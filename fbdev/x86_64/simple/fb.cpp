@@ -155,10 +155,10 @@ int main()
     vinfo.grayscale = 0;
     vinfo.bits_per_pixel = 32;
 
-    vinfo.xres = 1024;
+    vinfo.xres = 1280;
     vinfo.yres = 720;
-    vinfo.xres_virtual = 800;
-    vinfo.yres_virtual = 600;
+    vinfo.xres_virtual = 1280;
+    vinfo.yres_virtual = 720;
 
     vinfo.nonstd = V4L2_PIX_FMT_RGB32; 
 

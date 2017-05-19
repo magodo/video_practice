@@ -157,6 +157,7 @@ void show_vinfo(struct fb_var_screeninfo *vinfo)
     ss << "sync: " << vinfo->sync << endl;
     ss << "vmode: " << vinfo->vmode << endl;
     ss << "rotate: " << vinfo->rotate << endl;
+    ss << "colorspace: " << vinfo->colorspace << endl;
     cout << ss.str();
 }
 
@@ -183,18 +184,21 @@ int main(int argc, char *argv[])
     // var info
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
     ioctl(fb_fd, FBIOGET_FSCREENINFO, &finfo);
-    show_vinfo(&vinfo);
-    show_finfo(&finfo);
+    //show_vinfo(&vinfo);
+    //show_finfo(&finfo);
 
-#if 0
+#if 1
 /**
  * This part is for proving when setting 24 for bits_per_pixel, the actual bits_per_pixel is 32
  */
-    vinfo.bits_per_pixel = 24;
+    vinfo.bits_per_pixel = 32;
     vinfo.nonstd = V4L2_PIX_FMT_RGB32;   
     vinfo.activate = FB_ACTIVATE_NOW;
     ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vinfo);
+
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
+    ioctl(fb_fd, FBIOGET_FSCREENINFO, &finfo);
     show_vinfo(&vinfo);
+    show_finfo(&finfo);
 #endif
 }
