@@ -98,10 +98,11 @@ int main(int argc, char *argv[])
 
 	/* Set virtual display size double the width for double buffering */
 	vinfo.yoffset = 0;
-    vinfo.xres = 720;
-    vinfo.yres = 1280;
+    vinfo.xres = 2560;
+    vinfo.yres = 1440;
     vinfo.xres_virtual = vinfo.xres;
-	vinfo.yres_virtual = vinfo.yres * 2;
+	//vinfo.yres_virtual = vinfo.yres * 2;
+	vinfo.yres_virtual = vinfo.yres;
 
 	if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vinfo)) {
 		perror("Error setting variable screen info from fb");
