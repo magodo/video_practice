@@ -105,74 +105,83 @@ void ShowInputInfo(int fd)
 
     memset(&input, 0, sizeof(input));
 
-    if (ioctl(fd, VIDIOC_G_INPUT, &input.index) == -1)
-    {
-        perror(" VIDIOC_G_INPUT");
-        exit(-1);
-    }
+    input.index = 0;
 
-    if (ioctl(fd, VIDIOC_ENUMINPUT, &input) == -1)
+    while (ioctl(fd, VIDIOC_ENUMINPUT, &input) == 0)
+    {
+        switch (input.type)
+        {
+            case V4L2_INPUT_TYPE_TUNER:
+                type = "tunner (RF demodulator)";
+                break;
+            case V4L2_INPUT_TYPE_CAMERA:
+                type = "non-tuner video input";
+                break;
+#ifdef  V4L2_INPUT_TYPE_TOUCH
+            case V4L2_INPUT_TYPE_TOUCH:
+                type = "touch device for capturing raw data";
+                break;
+#endif
+        }
+
+        std::cout << "Video Input (index: " << input.index << ")"
+                  << "\n\tname: " << input.name
+                  << "\n\ttype: " << type
+                  << "\n\taudio set: " << std::hex << input.audioset << std::dec;
+
+        if (input.type == V4L2_INPUT_TYPE_TUNER)
+            std::cout << "\n\ttuner index: " << input.tuner;
+        else
+            std::cout << "\n\ttuner index: N/A";
+
+        std::cout << "\n\tsupporeted standard id set: " << std::hex << input.std << std::dec << std::endl;
+
+        /* Following status info only makes sense when current input is selected */
+        if (ioctl(fd, VIDIOC_S_INPUT, &input.index) == -1)
+        {
+            perror("VIDIOC_S_INPUT");
+            exit(-1);
+        }
+
+        std::cout << "\n\tstatus (only make sense if current input/output is selected): "
+                  << std::boolalpha
+                  << "\n\t * No power: " << (bool)(input.status & V4L2_IN_ST_NO_POWER)
+                  << "\n\t * No signal: " << (bool)(input.status & V4L2_IN_ST_NO_SIGNAL)
+                  << "\n\t * No color in signal: " << (bool)(input.status & V4L2_IN_ST_NO_COLOR)
+                  << "\n\t * (Sensor) horizontal flip: " << (bool)(input.status & V4L2_IN_ST_HFLIP)
+                  << "\n\t * (Sensor) vertical flip: " << (bool)(input.status & V4L2_IN_ST_VFLIP)
+                  << "\n\t * (Anolog Video) no hsync: " << (bool)(input.status & V4L2_IN_ST_NO_H_LOCK)
+                  << "\n\t * (Anolog Video) color kill: " << (bool)(input.status & V4L2_IN_ST_COLOR_KILL)
+#ifdef  V4L2_IN_ST_NO_V_LOCK
+                  << "\n\t * (Anolog Video) no vsync: " << (bool)(input.status & V4L2_IN_ST_NO_V_LOCK)
+#endif
+#ifdef  V4L2_IN_ST_NO_STD_LOCK
+                  << "\n\t * (Anolog Video) no standard lock: " << (bool)(input.status & V4L2_IN_ST_NO_STD_LOCK)
+#endif
+                  << "\n\t * (Digital Video) no sync lock: " << (bool)(input.status & V4L2_IN_ST_NO_SYNC)
+                  << "\n\t * (Digital Video) no EQ lock: " << (bool)(input.status & V4L2_IN_ST_NO_EQU)
+                  << "\n\t * (Digital Video) carrier recover failed: " << (bool)(input.status & V4L2_IN_ST_NO_CARRIER)
+                  << "\n\t * (VCR & Set-Top Box) macrovision detected: " << (bool)(input.status & V4L2_IN_ST_MACROVISION)
+                  << "\n\t * (VCR & Set-Top Box) conditional access denied: " << (bool)(input.status & V4L2_IN_ST_NO_ACCESS)
+                  << "\n\t * (VCR & Set-Top Box) VTR time is constant: " << (bool)(input.status & V4L2_IN_ST_VTR)
+
+                  << "\n\tcapabilities: "
+                  << "\n\t * video timings: " << (bool)(input.capabilities & V4L2_IN_CAP_DV_TIMINGS)
+                  << "\n\t * set video standard: " << (bool)(input.capabilities & V4L2_IN_CAP_STD) << "(not always means can't use std-related API if it is false)"
+#ifdef  V4L2_IN_CAP_NATIVE_SIZE
+                  << "\n\t * set native size: " << (bool)(input.capabilities & V4L2_IN_CAP_NATIVE_SIZE)
+#endif
+
+                  << std::endl;
+
+        ++input.index;
+    }
+    
+    if (errno != EINVAL)
     {
         perror("VIDIOC_ENUMINPUT");
         exit(-1);
     }
-
-    switch (input.type)
-    {
-        case V4L2_INPUT_TYPE_TUNER:
-            type = "tunner (RF demodulator)";
-            break;
-        case V4L2_INPUT_TYPE_CAMERA:
-            type = "non-tuner video input";
-            break;
-#ifdef  V4L2_INPUT_TYPE_TOUCH
-        case V4L2_INPUT_TYPE_TOUCH:
-            type = "touch device for capturing raw data";
-            break;
-#endif
-    }
-
-    std::cout << "Video Input (index: " << input.index << ")"
-              << "\n\tname: " << input.name
-              << "\n\ttype: " << type
-              << "\n\taudio set: " << std::hex << input.audioset << std::dec;
-
-    if (input.type == V4L2_INPUT_TYPE_TUNER)
-        std::cout << "\n\ttuner index: " << input.tuner;
-    else
-        std::cout << "\n\ttuner index: N/A";
-
-    std::cout << "\n\tsupporeted standard id set: " << std::hex << input.std << std::dec
-              << "\n\tstatus (only make sense if current device is selected): "
-              << std::boolalpha
-              << "\n\t * No power: " << (bool)(input.status & V4L2_IN_ST_NO_POWER)
-              << "\n\t * No signal: " << (bool)(input.status & V4L2_IN_ST_NO_SIGNAL)
-              << "\n\t * No color in signal: " << (bool)(input.status & V4L2_IN_ST_NO_COLOR)
-              << "\n\t * (Sensor) horizontal flip: " << (bool)(input.status & V4L2_IN_ST_HFLIP)
-              << "\n\t * (Sensor) vertical flip: " << (bool)(input.status & V4L2_IN_ST_VFLIP)
-              << "\n\t * (Anolog Video) no hsync: " << (bool)(input.status & V4L2_IN_ST_NO_H_LOCK)
-              << "\n\t * (Anolog Video) color kill: " << (bool)(input.status & V4L2_IN_ST_COLOR_KILL)
-#ifdef  V4L2_IN_ST_NO_V_LOCK
-              << "\n\t * (Anolog Video) no vsync: " << (bool)(input.status & V4L2_IN_ST_NO_V_LOCK)
-#endif
-#ifdef  V4L2_IN_ST_NO_STD_LOCK
-              << "\n\t * (Anolog Video) no standard lock: " << (bool)(input.status & V4L2_IN_ST_NO_STD_LOCK)
-#endif
-              << "\n\t * (Digital Video) no sync lock: " << (bool)(input.status & V4L2_IN_ST_NO_SYNC)
-              << "\n\t * (Digital Video) no EQ lock: " << (bool)(input.status & V4L2_IN_ST_NO_EQU)
-              << "\n\t * (Digital Video) carrier recover failed: " << (bool)(input.status & V4L2_IN_ST_NO_CARRIER)
-              << "\n\t * (VCR & Set-Top Box) macrovision detected: " << (bool)(input.status & V4L2_IN_ST_MACROVISION)
-              << "\n\t * (VCR & Set-Top Box) conditional access denied: " << (bool)(input.status & V4L2_IN_ST_NO_ACCESS)
-              << "\n\t * (VCR & Set-Top Box) VTR time is constant: " << (bool)(input.status & V4L2_IN_ST_VTR)
-
-              << "\n\tcapabilities: "
-              << "\n\t * video timings: " << (bool)(input.capabilities & V4L2_IN_CAP_DV_TIMINGS)
-              << "\n\t * set video standard: " << (bool)(input.capabilities & V4L2_IN_CAP_STD) << "(not always means can't use std-related API if it is false)"
-#ifdef  V4L2_IN_CAP_NATIVE_SIZE
-              << "\n\t * set native size: " << (bool)(input.capabilities & V4L2_IN_CAP_NATIVE_SIZE)
-#endif
-
-              << std::endl;
 }
 
 /**
@@ -657,7 +666,7 @@ int main()
 
     /* standard */
 
-    ShowCurrentStandard(fd);
+    //ShowCurrentStandard(fd);
     //EnumSupportedStandard(fd);
 
     /* control */
