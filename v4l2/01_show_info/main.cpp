@@ -287,7 +287,7 @@ void EnumMenu(int fd, uint32_t id, struct v4l2_queryctrl queryctrl, bool is_type
 {
     struct v4l2_querymenu querymenu;
 
-    std::cout << "\t\tMenu items (" << queryctrl.minimum << "-" << queryctrl.maximum
+    std::cout << "\n\t\tMenu items (" << queryctrl.minimum << "-" << queryctrl.maximum
               << ", default: " << queryctrl.default_value << ")" << std::endl;
 
     memset(&querymenu, 0, sizeof(querymenu));
@@ -313,6 +313,7 @@ void ShowOneControl(int fd, struct v4l2_query_ext_ctrl queryctrl)
 void ShowOneControl(int fd, struct v4l2_queryctrl queryctrl)
 #endif
 {
+    std::cout << "\t" << queryctrl.name;
     switch (queryctrl.type)
     {
         /* following types support "default value" */
@@ -335,9 +336,7 @@ void ShowOneControl(int fd, struct v4l2_queryctrl queryctrl)
                 perror("VIDIOC_G_CTRL");
                 exit(-1);
             }
-            std::cout << "(" << queryctrl.minimum
-                      << "-" << queryctrl.maximum
-                      << ", default: " << queryctrl.default_value
+            std::cout << "(default: " << queryctrl.default_value
                       << "): " << control.value
                       << std::endl;
             break;
@@ -362,7 +361,11 @@ void ShowOneControl(int fd, struct v4l2_queryctrl queryctrl)
 
 void EnumControls_Old(int fd)
 {
+#ifdef VIDIOC_QUERY_EXT_CTRL
+    struct v4l2_query_ext_ctrl queryctrl;
+#else
     struct v4l2_queryctrl queryctrl;
+#endif
 
     memset(&queryctrl, 0, sizeof(queryctrl));
 
@@ -374,7 +377,12 @@ void EnumControls_Old(int fd)
          queryctrl.id < V4L2_CID_LASTP1;
          queryctrl.id++)
     {
+
+#ifdef  VIDIOC_QUERY_EXT_CTRL
+        if (0 == ioctl(fd, VIDIOC_QUERY_EXT_CTRL, &queryctrl))
+#else
         if (0 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl))
+#endif
         {
             if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
             {
@@ -401,7 +409,11 @@ void EnumControls_Old(int fd)
     for (queryctrl.id= V4L2_CID_PRIVATE_BASE;;
          queryctrl.id++)
     {
+#ifdef   VIDIOC_QUERY_EXT_CTRL
+        if (0 == ioctl(fd, VIDIOC_QUERY_EXT_CTRL, &queryctrl))
+#else
         if (0 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl))
+#endif
         {
             if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
             {
@@ -425,52 +437,11 @@ void EnumControls_Old(int fd)
 
 void EnumControls(int fd)
 {
-    struct v4l2_queryctrl queryctrl;
-
-    memset(&queryctrl, 0, sizeof(queryctrl));
-    /* We do not enumerate id starting from zero is because,
-     * >>> Drivers may return EINVAL if a control in this range
-     * is not supported. 
-     *
-     * And
-     *
-     * >>> When the application ORs id with
-     * V4L2_CTRL_FLAG_NEXT_CTRL the driver returns the next supported
-     * non-compound control, or EINVAL if there is none.
-     *
-     * So we can always return 0 from ioctl if id is ORed with 
-     * V4L2_CTRL_FLAG_NEXT_CTRL since it is guaranteed to be supported.
-     * Unless out of range.
-     *
-     * NOTE: here we only check the non-compound control */
-    queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-
-    std::cout << "Control " << std::endl;
-    while (0 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl))
-    {
-        /* V4L2_CTRL_FLAG_DISABLED flag means this control should be
-         * permanently ignored. */
-        if (!(queryctrl.flags & V4L2_CTRL_FLAG_DISABLED))
-        {
-            /* Show one control info */
-            ShowOneControl(fd, queryctrl);
-        }
-
-        queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
-    }
-
-
-    if (errno != EINVAL)
-    {
-        perror("VIDIOC_QUERYCTRL");
-        exit(-1);
-    }
-}
-
 #ifdef VIDIOC_QUERY_EXT_CTRL
-void EnumExtControls(int fd)
-{
     struct v4l2_query_ext_ctrl queryctrl;
+#else
+    struct v4l2_queryctrl queryctrl;
+#endif
 
     memset(&queryctrl, 0, sizeof(queryctrl));
     /* We do not enumerate id starting from zero is because,
@@ -491,7 +462,11 @@ void EnumExtControls(int fd)
     queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 
     std::cout << "Control " << std::endl;
+#ifdef VIDIOC_QUERY_EXT_CTRL
     while (0 == ioctl(fd, VIDIOC_QUERY_EXT_CTRL, &queryctrl))
+#else
+    while (0 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl))
+#endif
     {
         /* V4L2_CTRL_FLAG_DISABLED flag means this control should be
          * permanently ignored. */
@@ -511,7 +486,6 @@ void EnumExtControls(int fd)
         exit(-1);
     }
 }
-#endif
 
 /**
  * Enumarate image formats(for capture only) supported by current device.
@@ -563,7 +537,7 @@ void ShowCaptureCurrentFormat(int fd)
 
     if (0 == ioctl(fd, VIDIOC_G_FMT, &format))
     {
-        std::cout << "Current image format(Capture):\n"
+        std::cout << "Current image format(Capture):"
                   << "\n\twidth: " << format.fmt.pix.width
                   << "\n\theight: " << format.fmt.pix.height
                   << "\n\tpixel format: " << Fourcc2String(format.fmt.pix.pixelformat)
@@ -582,7 +556,7 @@ void ShowCaptureCurrentFormat(int fd)
             {
                 if (format.fmt.pix.priv == V4L2_PIX_FMT_PRIV_MAGIC)
                 {
-                    std::cout << "\tpixel flag: 0x" << std::hex << format.fmt.pix.flags;
+                    std::cout << "\tpixel flag: 0x" << std::hex << format.fmt.pix.flags << std::dec;
                     std::cout << "\n\tY'CbCr encoding: " << format.fmt.pix.ycbcr_enc;
                     std::cout << "\n\tquantization: " << format.fmt.pix.quantization;
                     std::cout << "\n\ttransfer function: " << format.fmt.pix.xfer_func << std::endl;
@@ -665,20 +639,18 @@ int main()
     ShowInputInfo(fd);
 
     /* standard */
+    /* (my thinkpad-t460p's camera doesn't has the capability to set standard) */
 
     //ShowCurrentStandard(fd);
     //EnumSupportedStandard(fd);
 
     /* control */
 
-    EnumControls(fd);
     EnumControls_Old(fd);
-#ifdef VIDIOC_QUERY_EXT_CTRL
-    EnumExtControls(fd);
-#endif
+    EnumControls(fd);
 
     /* image format */
-    //EnumCaptureImageFormat(fd);
+    EnumCaptureImageFormat(fd);
     ShowCaptureCurrentFormat(fd);
 
     /* crop */
@@ -686,7 +658,6 @@ int main()
 
     /* streaming parameters */
     ShowCaptureStreamParam(fd);
-
 
     close(fd);
 }
