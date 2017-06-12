@@ -5,18 +5,22 @@
  ************************************************************************/
 
 #include <iostream>
+#include <string>
+
 #include <linux/videodev2.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <cstring>
 #include <unistd.h>
+#include <stdio.h>
+#include <unistd.h>
 
 /**
- * Helper function for dumping video device capability infos
+ * Helper function for enumarating video device capability infos
  */
 
-void DumpCapbility_(uint32_t cap)
+void EnumCapbility_(uint32_t cap)
 {
     std::cout << std::boolalpha 
               << "\n\t  * capture: " << bool(cap & V4L2_CAP_VIDEO_CAPTURE )
@@ -60,10 +64,10 @@ void DumpCapbility_(uint32_t cap)
 }
 
 /**
- * Dump every field from "VIDIOC_QUERYCAP"
+ * Enumarate every field from "VIDIOC_QUERYCAP"
  */
 
-void DumpCapbility(int fd)
+void EnumCapbility(int fd)
 {
     struct v4l2_capability cap;
 
@@ -82,34 +86,35 @@ void DumpCapbility(int fd)
               << "." << ((cap.version >> 8) & 0xff) 
               << "." << ((cap.version) & 0xff ) 
               << "\n\tCapability(all func): ";
-    DumpCapbility_(cap.capabilities);
+    EnumCapbility_(cap.capabilities);
     if (cap.capabilities & V4L2_CAP_DEVICE_CAPS)
     {
         std::cout << "\n\tCapability(current node): ";
-        DumpCapbility_(cap.device_caps);
+        EnumCapbility_(cap.device_caps);
     }
     std::cout << std::endl;
 }
 
 /**
- * Dump every field from "VIDIOC_ENUMINPUT"
+ * Show every field from "VIDIOC_ENUMINPUT"
  */
-void DumpInputInfo(int fd)
+void ShowInputInfo(int fd)
 {
     struct v4l2_input input;
     std::string type("Unknwon");
 
     memset(&input, 0, sizeof(input));
+
     if (ioctl(fd, VIDIOC_G_INPUT, &input.index) == -1)
     {
         perror(" VIDIOC_G_INPUT");
-        return;
+        exit(-1);
     }
 
     if (ioctl(fd, VIDIOC_ENUMINPUT, &input) == -1)
     {
         perror("VIDIOC_ENUMINPUT");
-        return;
+        exit(-1);
     }
 
     switch (input.type)
@@ -127,7 +132,7 @@ void DumpInputInfo(int fd)
 #endif
     }
 
-    std::cout << "Video Input:" 
+    std::cout << "Video Input (index: " << input.index << ")"
               << "\n\tname: " << input.name
               << "\n\ttype: " << type
               << "\n\taudio set: " << std::hex << input.audioset << std::dec;
@@ -171,22 +176,24 @@ void DumpInputInfo(int fd)
 }
 
 /**
- * Dump current standard
+ * Show current standard
  */
 
-void DumpCurrentStandard(int fd)
+void ShowCurrentStandard(int fd)
 {
-    /* Get supported standard id (one or a set of standards) */
+    /* Get currrent standard id */
 
     v4l2_std_id std_id;
+
+    memset(&std_id, 0, sizeof(std_id));
 
     if (-1 == ioctl(fd, VIDIOC_G_STD, &std_id))
     {
         perror("VIDIOC_G_STD");
-        return;
+        exit(-1);
     }
 
-    /* Enumarate all video standards, check which corresponds to our
+    /* Enumarate all video standards, check which current
      * standard id. Get the corresponding detail information. */
 
     struct v4l2_standard standard;
@@ -196,7 +203,6 @@ void DumpCurrentStandard(int fd)
     index = 0;
     standard.index = index;
 
-    std::cout << "Current Standard(s):";
     while (0 == ioctl(fd, VIDIOC_ENUMSTD, &standard))
     {
         if (standard.id & std_id)
@@ -215,10 +221,421 @@ void DumpCurrentStandard(int fd)
     if ((errno == EINVAL) || (errno == ENOTTY) || (standard.index == 0))
     {
         perror("VIDIOC_ENUMSTD");
-        return;
+        exit(-1);
     }
 
     return;
+}
+
+/**
+ * Enum supported standards
+ */
+void EnumSupportedStandard(int fd)
+{
+    struct v4l2_input input;
+    struct v4l2_standard standard;
+
+    if (0 != ioctl(fd, VIDIOC_G_INPUT, &input.index))
+    {
+        perror("VIDIOC_G_INPUT");
+        exit(-1);
+    }
+
+    if (0 != ioctl(fd, VIDIOC_ENUMINPUT, &input))
+    {
+        perror("VIDIOC_ENUMINPUT");
+        exit(-1);
+    }
+
+    memset(&standard, 0, sizeof(standard));
+    standard.index = 0;
+
+    std::cout << "All supported standards:" << std::endl;
+    while (0 == ioctl(fd, VIDIOC_ENUMSTD, &standard))
+    {
+        if (standard.id & input.std)
+            std::cout << "\t* " << standard.name << std::endl;
+    }
+
+    /* EINVAL indicates the end of enumaration, which cannot
+     * be empty unless this device falls under USB exception*/
+    if (errno != EINVAL || standard.index == 0)
+    {
+        perror("VIDIOC_ENUMSTD");
+        exit(-1);
+    }
+}
+
+/**
+ * Enumerate User Controls
+ */
+
+#ifdef VIDIOC_QUERY_EXT_CTRL
+void EnumMenu(int fd, uint32_t id, struct v4l2_query_ext_ctrl queryctrl, bool is_type_int)
+#else
+void EnumMenu(int fd, uint32_t id, struct v4l2_queryctrl queryctrl, bool is_type_int)
+#endif
+{
+    struct v4l2_querymenu querymenu;
+
+    std::cout << "\t\tMenu items (" << queryctrl.minimum << "-" << queryctrl.maximum
+              << ", default: " << queryctrl.default_value << ")" << std::endl;
+
+    memset(&querymenu, 0, sizeof(querymenu));
+    querymenu.id = id;
+
+    for (querymenu.index = queryctrl.minimum;
+         static_cast<int>(querymenu.index) <= queryctrl.maximum;
+         querymenu.index++)
+    {
+        if (0 == ioctl(fd, VIDIOC_QUERYMENU, &querymenu))
+        {
+            if (is_type_int)
+                std::cout << "\t\t" << querymenu.index<< ". " << querymenu.value << std::endl;
+            else
+                std::cout << "\t\t" << querymenu.index<< ". " << querymenu.name << std::endl;
+        }
+    }
+}
+
+#ifdef VIDIOC_QUERY_EXT_CTRL
+void ShowOneControl(int fd, struct v4l2_query_ext_ctrl queryctrl)
+#else
+void ShowOneControl(int fd, struct v4l2_queryctrl queryctrl)
+#endif
+{
+    switch (queryctrl.type)
+    {
+        /* following types support "default value" */
+        case V4L2_CTRL_TYPE_INTEGER:
+        case V4L2_CTRL_TYPE_BOOLEAN:
+        case V4L2_CTRL_TYPE_BITMASK:
+        case V4L2_CTRL_TYPE_INTEGER64:
+#ifdef V4L2_CTRL_TYPE_U8
+        case V4L2_CTRL_TYPE_U8:
+        case V4L2_CTRL_TYPE_U16:
+        case V4L2_CTRL_TYPE_U32:
+#endif
+        {
+            struct v4l2_control control;
+
+            memset(&control, 0, sizeof(control));
+            control.id = queryctrl.id;
+            if (-1 == ioctl(fd, VIDIOC_G_CTRL, &control))
+            {
+                perror("VIDIOC_G_CTRL");
+                exit(-1);
+            }
+            std::cout << "(" << queryctrl.minimum
+                      << "-" << queryctrl.maximum
+                      << ", default: " << queryctrl.default_value
+                      << "): " << control.value
+                      << std::endl;
+            break;
+        }
+
+        /* following 2 menu types also support "default value"*/
+        case V4L2_CTRL_TYPE_MENU:
+            EnumMenu(fd, queryctrl.id, queryctrl, false);
+            break;
+        case V4L2_CTRL_TYPE_INTEGER_MENU:
+            EnumMenu(fd, queryctrl.id, queryctrl,true);
+            break;
+
+        /* Only show control name... */
+        case V4L2_CTRL_TYPE_BUTTON:
+        case V4L2_CTRL_TYPE_STRING:
+        case V4L2_CTRL_TYPE_CTRL_CLASS:
+            break;
+    }
+}
+
+
+void EnumControls_Old(int fd)
+{
+    struct v4l2_queryctrl queryctrl;
+
+    memset(&queryctrl, 0, sizeof(queryctrl));
+
+    std::cout << "Control " << std::endl;
+
+    /* Check pre-defined controls */
+
+    for (queryctrl.id = V4L2_CID_BASE;
+         queryctrl.id < V4L2_CID_LASTP1;
+         queryctrl.id++)
+    {
+        if (0 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl))
+        {
+            if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+            {
+                continue;
+            }
+
+            /* Show one control info */
+            ShowOneControl(fd, queryctrl);
+        }
+        else
+        {
+            if (errno == EINVAL)
+            {
+                /* driver not support this control */
+                continue;
+            }
+            perror("VIDIOC_QUERYCTRL");
+            exit(-1);
+        }
+    }
+
+    /* Check driver-specific controls */
+
+    for (queryctrl.id= V4L2_CID_PRIVATE_BASE;;
+         queryctrl.id++)
+    {
+        if (0 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl))
+        {
+            if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
+            {
+                continue;
+            }
+
+            /* Show one control info */
+            ShowOneControl(fd, queryctrl);
+        }
+        else
+        {
+            if (errno == EINVAL)
+                /* out of range */
+                break;
+
+            perror("VIDIOC_QUERYCTRL");
+            exit(-1);
+        }
+    }
+}
+
+void EnumControls(int fd)
+{
+    struct v4l2_queryctrl queryctrl;
+
+    memset(&queryctrl, 0, sizeof(queryctrl));
+    /* We do not enumerate id starting from zero is because,
+     * >>> Drivers may return EINVAL if a control in this range
+     * is not supported. 
+     *
+     * And
+     *
+     * >>> When the application ORs id with
+     * V4L2_CTRL_FLAG_NEXT_CTRL the driver returns the next supported
+     * non-compound control, or EINVAL if there is none.
+     *
+     * So we can always return 0 from ioctl if id is ORed with 
+     * V4L2_CTRL_FLAG_NEXT_CTRL since it is guaranteed to be supported.
+     * Unless out of range.
+     *
+     * NOTE: here we only check the non-compound control */
+    queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+
+    std::cout << "Control " << std::endl;
+    while (0 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl))
+    {
+        /* V4L2_CTRL_FLAG_DISABLED flag means this control should be
+         * permanently ignored. */
+        if (!(queryctrl.flags & V4L2_CTRL_FLAG_DISABLED))
+        {
+            /* Show one control info */
+            ShowOneControl(fd, queryctrl);
+        }
+
+        queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+    }
+
+
+    if (errno != EINVAL)
+    {
+        perror("VIDIOC_QUERYCTRL");
+        exit(-1);
+    }
+}
+
+#ifdef VIDIOC_QUERY_EXT_CTRL
+void EnumExtControls(int fd)
+{
+    struct v4l2_query_ext_ctrl queryctrl;
+
+    memset(&queryctrl, 0, sizeof(queryctrl));
+    /* We do not enumerate id starting from zero is because,
+     * >>> Drivers may return EINVAL if a control in this range
+     * is not supported. 
+     *
+     * And
+     *
+     * >>> When the application ORs id with
+     * V4L2_CTRL_FLAG_NEXT_CTRL the driver returns the next supported
+     * non-compound control, or EINVAL if there is none.
+     *
+     * So we can always return 0 from ioctl if id is ORed with 
+     * V4L2_CTRL_FLAG_NEXT_CTRL since it is guaranteed to be supported.
+     * Unless out of range.
+     *
+     * NOTE: here we only check the non-compound control */
+    queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+
+    std::cout << "Control " << std::endl;
+    while (0 == ioctl(fd, VIDIOC_QUERY_EXT_CTRL, &queryctrl))
+    {
+        /* V4L2_CTRL_FLAG_DISABLED flag means this control should be
+         * permanently ignored. */
+        if (!(queryctrl.flags & V4L2_CTRL_FLAG_DISABLED))
+        {
+            /* Show one control info */
+            ShowOneControl(fd, queryctrl);
+
+        }
+
+        queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+    }
+
+    if (errno != EINVAL)
+    {
+        perror("VIDIOC_QUERY_EXT_CTRL");
+        exit(-1);
+    }
+}
+#endif
+
+/**
+ * Enumarate image formats(for capture only) supported by current device.
+ */
+
+void EnumCaptureImageFormat(int fd)
+{
+    struct v4l2_fmtdesc fmt_desc;
+
+    memset(&fmt_desc, 0, sizeof(fmt_desc));
+    
+    fmt_desc.index = 0;
+    fmt_desc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+    std::cout << "Supported image formats(Capture):" << std::endl;
+    while (0 == ioctl(fd, VIDIOC_ENUM_FMT, &fmt_desc))
+    {
+        std::cout << "\t" << fmt_desc.description << "("
+                  << ((fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)? "compressed":"non-compressed")
+                  << ")" << std::endl;
+        fmt_desc.index++;
+    }
+
+    if (errno != EINVAL)
+    {
+        std::cout << errno << std::endl;
+        perror("VIDIOC_ENUM_FMT");
+        exit(-1);
+    }
+    
+}
+
+std::string Fourcc2String(uint32_t pix_fmt)
+{
+    std::string str;
+    str.insert(0, 1, (pix_fmt >> 24) & 0xff);
+    str.insert(0, 1, (pix_fmt >> 16) & 0xff);
+    str.insert(0, 1, (pix_fmt >> 8) & 0xff);
+    str.insert(0, 1, pix_fmt & 0xff);
+    return str;
+}
+
+void ShowCaptureCurrentFormat(int fd)
+{
+    struct v4l2_format format;
+
+    memset(&format, 0, sizeof(format));
+    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+    if (0 == ioctl(fd, VIDIOC_G_FMT, &format))
+    {
+        std::cout << "Current image format(Capture):\n"
+                  << "\n\twidth: " << format.fmt.pix.width
+                  << "\n\theight: " << format.fmt.pix.height
+                  << "\n\tpixel format: " << Fourcc2String(format.fmt.pix.pixelformat)
+                  << "\n\tfield: " << format.fmt.pix.field
+                  << "\n\tbytesperline: " << format.fmt.pix.bytesperline
+                  << "\n\tsize image: " << format.fmt.pix.sizeimage
+                  << "\n\tcolorspace: " << format.fmt.pix.colorspace << std::endl;
+
+#ifdef V4L2_PIX_FMT_PRIV_MAGIC
+        struct v4l2_capability cap;
+        memset(&cap, 0, sizeof(cap));
+
+        if (0 == ioctl(fd, VIDIOC_QUERYCAP, &cap))
+        {
+            if (cap.capabilities & V4L2_CAP_EXT_PIX_FORMAT)
+            {
+                if (format.fmt.pix.priv == V4L2_PIX_FMT_PRIV_MAGIC)
+                {
+                    std::cout << "\tpixel flag: 0x" << std::hex << format.fmt.pix.flags;
+                    std::cout << "\n\tY'CbCr encoding: " << format.fmt.pix.ycbcr_enc;
+                    std::cout << "\n\tquantization: " << format.fmt.pix.quantization;
+                    std::cout << "\n\ttransfer function: " << format.fmt.pix.xfer_func << std::endl;
+                }
+            }
+        }
+#endif
+
+
+    }
+}
+
+/**
+ * Show cropping capability of capture
+ */
+
+void ShowCaptureCropCap(int fd)
+{
+    struct v4l2_cropcap crop_cap;
+
+    memset(&crop_cap, 0, sizeof(crop_cap));
+    crop_cap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (0 == ioctl(fd, VIDIOC_CROPCAP, &crop_cap))
+    {
+        std::cout << "Crop capability: " <<std::endl;
+        std::cout << "\tBoud: (" << crop_cap.bounds.left << ","
+                  << crop_cap.bounds.top << "), "
+                  << crop_cap.bounds.width << "x"
+                  << crop_cap.bounds.height << std::endl;
+        std::cout << "\tDefault Rect: (" << crop_cap.defrect.left << ","
+                  << crop_cap.defrect.top << "), "
+                  << crop_cap.defrect.width << "x"
+                  << crop_cap.defrect.height << std::endl;
+        std::cout << "\tPixel Aspect: " << crop_cap.pixelaspect.numerator
+                  << "/" << crop_cap.pixelaspect.denominator << std::endl;
+    }
+    else
+    {
+        perror("VIDIOC_CROPCAP");
+        exit(-1);
+    }
+}
+
+/**
+ * Show input device's streaming parameter 
+ */
+
+void ShowCaptureStreamParam(int fd)
+{
+    struct v4l2_streamparm param;
+
+    param.type =  V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (0 == ioctl(fd, VIDIOC_G_PARM, &param))
+    {
+        std::cout << "Capture streaming parameters:" << std::endl;
+        std::cout << "\tHigh quality: " << std::boolalpha
+                  << (param.parm.capture.capturemode == V4L2_MODE_HIGHQUALITY) << std::endl;
+        std::cout << "\tTime per frame: " << (static_cast<double>(param.parm.capture.timeperframe.numerator)/
+                                            param.parm.capture.timeperframe.denominator)
+                  << " (sec)" << std::endl;
+        std::cout << "\tInternal buffer amount: " << param.parm.capture.readbuffers << std::endl;
+    }
 }
 
 
@@ -232,10 +649,35 @@ int main()
         return -1;
     }
 
-    DumpCapbility(fd);
-    DumpInputInfo(fd);
-    DumpCurrentStandard(fd);
-    //DumpSupportedStandard(fd);
+    /* device capability */
+    EnumCapbility(fd);
+
+    /* input device info */
+    ShowInputInfo(fd);
+
+    /* standard */
+
+    ShowCurrentStandard(fd);
+    //EnumSupportedStandard(fd);
+
+    /* control */
+
+    EnumControls(fd);
+    EnumControls_Old(fd);
+#ifdef VIDIOC_QUERY_EXT_CTRL
+    EnumExtControls(fd);
+#endif
+
+    /* image format */
+    //EnumCaptureImageFormat(fd);
+    ShowCaptureCurrentFormat(fd);
+
+    /* crop */
+    ShowCaptureCropCap(fd);
+
+    /* streaming parameters */
+    ShowCaptureStreamParam(fd);
+
 
     close(fd);
 }

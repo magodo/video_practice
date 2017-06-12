@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/uidj4668/github/video_practice/v4l2/01_show_info/build",
+  "command": "/usr/bin/c++      -std=c++11   -o CMakeFiles/a.out.dir/main.cpp.o -c /home/uidj4668/github/video_practice/v4l2/01_show_info/main.cpp",
+  "file": "/home/uidj4668/github/video_practice/v4l2/01_show_info/main.cpp"
+}
+]
