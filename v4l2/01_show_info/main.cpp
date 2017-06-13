@@ -511,7 +511,6 @@ void EnumCaptureImageFormat(int fd)
 
     if (errno != EINVAL)
     {
-        std::cout << errno << std::endl;
         perror("VIDIOC_ENUM_FMT");
         exit(-1);
     }
@@ -646,11 +645,11 @@ int main()
 
     /* control */
 
-    EnumControls_Old(fd);
-    EnumControls(fd);
+    //EnumControls_Old(fd);
+    //EnumControls(fd);
 
     /* image format */
-    EnumCaptureImageFormat(fd);
+    //EnumCaptureImageFormat(fd);
     ShowCaptureCurrentFormat(fd);
 
     /* crop */

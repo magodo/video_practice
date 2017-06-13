@@ -1,0 +1,42 @@
+[
+{
+  "directory": "/home/uidj4668/github/video_practice/v4l2/02_IO/build",
+  "command": "/usr/bin/c++    -I/home/uidj4668/github/video_practice/v4l2/02_IO/capture -I/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev -I/home/uidj4668/github/video_practice/v4l2/02_IO/util   -std=c++11   -o CMakeFiles/camera.dir/main.cpp.o -c /home/uidj4668/github/video_practice/v4l2/02_IO/main.cpp",
+  "file": "/home/uidj4668/github/video_practice/v4l2/02_IO/main.cpp"
+},
+{
+  "directory": "/home/uidj4668/github/video_practice/v4l2/02_IO/build",
+  "command": "/usr/bin/c++    -I/home/uidj4668/github/video_practice/v4l2/02_IO/capture -I/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev -I/home/uidj4668/github/video_practice/v4l2/02_IO/util   -std=c++11   -o CMakeFiles/camera.dir/capture/ICapture.cpp.o -c /home/uidj4668/github/video_practice/v4l2/02_IO/capture/ICapture.cpp",
+  "file": "/home/uidj4668/github/video_practice/v4l2/02_IO/capture/ICapture.cpp"
+},
+{
+  "directory": "/home/uidj4668/github/video_practice/v4l2/02_IO/build",
+  "command": "/usr/bin/c++    -I/home/uidj4668/github/video_practice/v4l2/02_IO/capture -I/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev -I/home/uidj4668/github/video_practice/v4l2/02_IO/util   -std=c++11   -o CMakeFiles/camera.dir/capture/ImplCapture.cpp.o -c /home/uidj4668/github/video_practice/v4l2/02_IO/capture/ImplCapture.cpp",
+  "file": "/home/uidj4668/github/video_practice/v4l2/02_IO/capture/ImplCapture.cpp"
+},
+{
+  "directory": "/home/uidj4668/github/video_practice/v4l2/02_IO/build",
+  "command": "/usr/bin/c++    -I/home/uidj4668/github/video_practice/v4l2/02_IO/capture -I/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev -I/home/uidj4668/github/video_practice/v4l2/02_IO/util   -std=c++11   -o CMakeFiles/camera.dir/fbdev/IFbDev.cpp.o -c /home/uidj4668/github/video_practice/v4l2/02_IO/fbdev/IFbDev.cpp",
+  "file": "/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev/IFbDev.cpp"
+},
+{
+  "directory": "/home/uidj4668/github/video_practice/v4l2/02_IO/build",
+  "command": "/usr/bin/c++    -I/home/uidj4668/github/video_practice/v4l2/02_IO/capture -I/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev -I/home/uidj4668/github/video_practice/v4l2/02_IO/util   -std=c++11   -o CMakeFiles/camera.dir/fbdev/ImplFbDev.cpp.o -c /home/uidj4668/github/video_practice/v4l2/02_IO/fbdev/ImplFbDev.cpp",
+  "file": "/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev/ImplFbDev.cpp"
+},
+{
+  "directory": "/home/uidj4668/github/video_practice/v4l2/02_IO/build",
+  "command": "/usr/bin/c++    -I/home/uidj4668/github/video_practice/v4l2/02_IO/capture -I/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev -I/home/uidj4668/github/video_practice/v4l2/02_IO/util   -std=c++11   -o CMakeFiles/camera.dir/util/IFileParser.cpp.o -c /home/uidj4668/github/video_practice/v4l2/02_IO/util/IFileParser.cpp",
+  "file": "/home/uidj4668/github/video_practice/v4l2/02_IO/util/IFileParser.cpp"
+},
+{
+  "directory": "/home/uidj4668/github/video_practice/v4l2/02_IO/build",
+  "command": "/usr/bin/c++    -I/home/uidj4668/github/video_practice/v4l2/02_IO/capture -I/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev -I/home/uidj4668/github/video_practice/v4l2/02_IO/util   -std=c++11   -o CMakeFiles/camera.dir/util/InitFileParser.cpp.o -c /home/uidj4668/github/video_practice/v4l2/02_IO/util/InitFileParser.cpp",
+  "file": "/home/uidj4668/github/video_practice/v4l2/02_IO/util/InitFileParser.cpp"
+},
+{
+  "directory": "/home/uidj4668/github/video_practice/v4l2/02_IO/build",
+  "command": "/usr/bin/c++    -I/home/uidj4668/github/video_practice/v4l2/02_IO/capture -I/home/uidj4668/github/video_practice/v4l2/02_IO/fbdev -I/home/uidj4668/github/video_practice/v4l2/02_IO/util   -std=c++11   -o CMakeFiles/camera.dir/util/IPixFmt.cpp.o -c /home/uidj4668/github/video_practice/v4l2/02_IO/util/IPixFmt.cpp",
+  "file": "/home/uidj4668/github/video_practice/v4l2/02_IO/util/IPixFmt.cpp"
+}
+]
