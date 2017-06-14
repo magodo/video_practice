@@ -85,32 +85,71 @@ void ImplCapture::Init()
     IFileParser *parser = IFileParser::getInstance();
 
     /* Select input */
+    struct v4l2_input input;
 
-    int index = strtol(parser->getInfo()["VIDEO"]["input"].c_str(), NULL, 10);
+    memset(&input, 0, sizeof(input));
+    input.index = strtol(parser->getInfo()["VIDEO"]["input"].c_str(), NULL, 10);
 
-    if (-1 == ioctl(fd_, VIDIOC_S_INPUT, &index))
+    if (-1 == ioctl(fd_, VIDIOC_S_INPUT, &input.index))
     {
         perror("VIDIOC_S_INPUT");
         exit(-1);
     }
 
-#if 0
-    /* Select standard */
+    /* Get input info*/
 
-    v4l2_std_id std = 0;
-
-    if (-1 == ioctl(fd_, VIDIOC_G_STD, &std))
+    if (-1 == ioctl(fd_, VIDIOC_ENUMINPUT, &input))
     {
-        perror("VIDIOC_G_STD");
+        perror("VIDIOC_ENUMINPUT");
         exit(-1);
     }
 
-    if (-1 == ioctl(fd_, VIDIOC_S_STD, &std))
+    /* Select standard
+     * This is necessary for input device who has 
+     * "standard" interface capability */
+
+/* i.MX 6 camera driver(mxc_v4l2) violates spec,
+ * it doesn't set capability flag while supporting
+ * "standard" interfaces. */
+
+#ifndef MXCFB
+    if (input.capabilities & V4L2_IN_CAP_STD)
+#endif
     {
-        perror("VIDIOC_S_STD");
-        exit(-1);
+
+        v4l2_std_id std = 0;
+
+        if (-1 == ioctl(fd_, VIDIOC_G_STD, &std))
+        {
+            perror("VIDIOC_G_STD");
+            exit(-1);
+        }
+
+        if (-1 == ioctl(fd_, VIDIOC_S_STD, &std))
+        {
+            perror("VIDIOC_S_STD");
+            exit(-1);
+        }
+        std::cout << "Standard: 0x" << std::hex << std << std::dec << std::endl;
     }
-    std::cout << "Standard: 0x" << std::hex << std << std::dec << std::endl;
+
+#if 1
+    /* Select stream parameter if support
+     * (there is no capability flag to check availability,
+     * only way is to check the return value)*/
+
+    struct v4l2_streamparm parm;
+
+    memset(&parm, 0, sizeof(parm));
+    parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    parm.parm.capture.timeperframe.numerator = 0;
+    parm.parm.capture.timeperframe.denominator = 0;
+    parm.parm.capture.capturemode = 0;
+    if (ioctl(fd_, VIDIOC_S_PARM, &parm) < 0)
+    {
+        /* don't exit here, just go on*/
+        perror("VIDIOC_S_PARM");
+    }
 #endif
 
     /* Select format */
@@ -122,17 +161,18 @@ void ImplCapture::Init()
     format.fmt.pix.height =strtol(parser->getInfo()["VIDEO"]["height"].c_str(), NULL, 10);
     format.fmt.pix.pixelformat = IPixFmt::strToFourcc(
                                  parser->getInfo()["VIDEO"]["pix_fmt"]);
+    format.fmt.pix.field = V4L2_FIELD_INTERLACED;
 
-    /* capture shouldn't set "field" */
-    //format.fmt.pix.field = V4L2_FIELD_INTERLACED;
-    
     if (-1 == ioctl(fd_, VIDIOC_S_FMT, &format))
     {
         perror("VIDIOC_S_FMT");
         exit(-1);
     }
 
+    ShowImageFormat(format);
+
     image_size_ = format.fmt.pix.sizeimage;
+
 
     /* Following proves the returned format from VIDIOC_S_FMT
      * is the actual set format. */
@@ -154,22 +194,6 @@ void ImplCapture::Init()
 #endif
     
 
-#if 0
-    /* Select stream parameter */
-
-    struct v4l2_streamparm parm;
-
-    memset(&parm, 0, sizeof(parm));
-    parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    parm.parm.capture.timeperframe.numerator = 1;
-    parm.parm.capture.timeperframe.denominator = 0;
-    parm.parm.capture.capturemode = 0;
-    if (ioctl(fd_, VIDIOC_S_PARM, &parm) < 0)
-    {
-        perror("VIDIOC_S_PARM");
-        exit(-1);
-    }
-#endif
 
 
 }
@@ -271,7 +295,7 @@ void ImplCapture::StreamOn()
 {
     /* following code only applys to input whose 
      * capability supprt "standard" interface. */
-#if 0
+#if 1
     v4l2_std_id curr_std_id;
     int counter_keep, counter_elapse;
 
@@ -350,8 +374,15 @@ int ImplCapture::DequeOneBuffer(uint8_t **addr)
 
     if (-1 == ioctl(fd_, VIDIOC_DQBUF, &buffer))
     {
-        perror("VIDIOC_DQBUF");
-        exit(-1);
+        if (errno == EINTR)
+        {
+            return -1;
+        }
+        else
+        {
+            perror("VIDIOC_DQBUF");
+            exit(-1);
+        }
     }
 
     if (addr != nullptr)

@@ -35,7 +35,6 @@ namespace fbdev
 
 #ifdef MXCFB
             virtual bool setGlobalAlpha(uint16_t alpha);
-            virtual bool setLocalAlpha();
             virtual bool setColorKey(uint32_t color_key);
             virtual bool unsetColorKey();
             virtual bool blank();

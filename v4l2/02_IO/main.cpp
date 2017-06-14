@@ -9,12 +9,40 @@
 #include "IFbDev.h"
 #include "ICapture.h"
 #include <cstring>
+#include <iostream>
 #include <unistd.h>
+#include <signal.h>
 
 using namespace fbdev;
 
+bool g_is_on = true;
+
+void SigHandler(int signo)
+{
+    switch (signo) 
+    {
+        case SIGINT:
+            g_is_on = false;
+            break;
+    }
+}
+
 int main()
 {
+    /* setup signal SIGINT */
+
+    struct sigaction act;
+
+    act.sa_handler = SigHandler;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+    if (-1 == sigaction(SIGINT, &act, NULL))
+    {
+        perror("sigaction");
+        exit(-1);
+    }
+
+
     IFileParser::getInstance()->parseFile("./my_config.ini");
 
     IFbDev *fb = IFbDev::getInstance();
@@ -41,12 +69,20 @@ int main()
 
     fb_buf = fb->getVirtualFbAddr();
     fb_size = cap->GetImageSize();
+    std::cout << "image siz: " << fb_size << std::endl;
+    std::cout << "fb size: " << fb->getVirtualFbSize() << std::endl;;
 
-    while (1)
+    while (g_is_on)
     {
         index = cap->DequeOneBuffer(&addr);
-        memcpy(fb_buf, addr, fb_size);
-        usleep(40000);
-        cap->EnqueOneBuffer(index);
+        if (index >= 0)
+        {
+            memcpy(fb_buf, addr, fb_size);
+            cap->EnqueOneBuffer(index);
+        }
     }
+
+    fb->deinit();
+    cap->Deinit();
+    cap->Close();
 }

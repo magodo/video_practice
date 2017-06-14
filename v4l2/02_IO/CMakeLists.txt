@@ -10,7 +10,7 @@ message("\n")
 
 # set adk prefix
 
-if (MXCFB EQUAL ON)
+if (MXCFB STREQUAL ON)
     # by adk
     if (DEFINED ENV{ADK_PREFIX})
         set (adk_root $ENV{ADK_PREFIX}/armv7a-mv-linux)
@@ -18,7 +18,7 @@ if (MXCFB EQUAL ON)
     else (DEFINED ENV{ADK_PREFIX})
         set (adk_root ${STAGING_DIR_HOST})
     endif (DEFINED ENV{ADK_PREFIX})
-endif (MXCFB EQUAL ON)
+endif (MXCFB STREQUAL ON)
 
 # for YCM
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -26,9 +26,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # compiler flag
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-if (MXCFB EQUAL ON)
+if (MXCFB STREQUAL "ON")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMXCFB")
-endif (MXCFB EQUAL ON)
+endif (MXCFB STREQUAL "ON")
 
 # include directory
 

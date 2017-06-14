@@ -97,6 +97,8 @@ bool ImplFbDev::init(string dev)
     m_vinfo.yres = strtol(parser->getInfo()["FB"]["yres"].c_str(), NULL, 10);
     m_vinfo.xres_virtual = strtol(parser->getInfo()["FB"]["xres_virtual"].c_str(), NULL, 10);
     m_vinfo.yres_virtual = strtol(parser->getInfo()["FB"]["yres_virtual"].c_str(), NULL, 10);
+    m_vinfo.xoffset = 0;
+    m_vinfo.yoffset = 0;
     m_vinfo.nonstd = IPixFmt::strToFourcc(parser->getInfo()["FB"]["pix_fmt"]);
 
     if (0 != ioctl(m_fd, FBIOPUT_VSCREENINFO, &m_vinfo))
@@ -127,6 +129,13 @@ bool ImplFbDev::init(string dev)
         cerr << "Mmap fb buffer failed: " << strerror(errno) << endl;
         return false;
     }
+
+#if 0
+    // fill in some color
+    for (uint32_t x = 0; x < m_vinfo.xres; x++)
+        for (uint32_t y = 0; y < m_vinfo.yres; y++)
+            drawPixel(x, y, 0xffffffff);
+#endif
 
     return true;
 }
