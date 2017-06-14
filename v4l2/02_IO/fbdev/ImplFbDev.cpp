@@ -98,7 +98,6 @@ bool ImplFbDev::init(string dev)
     m_vinfo.xres_virtual = strtol(parser->getInfo()["FB"]["xres_virtual"].c_str(), NULL, 10);
     m_vinfo.yres_virtual = strtol(parser->getInfo()["FB"]["yres_virtual"].c_str(), NULL, 10);
     m_vinfo.nonstd = IPixFmt::strToFourcc(parser->getInfo()["FB"]["pix_fmt"]);
-    m_vinfo.bits_per_pixel = IPixFmt::bpp(m_vinfo.nonstd);
 
     if (0 != ioctl(m_fd, FBIOPUT_VSCREENINFO, &m_vinfo))
     {

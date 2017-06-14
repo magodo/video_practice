@@ -31,6 +31,8 @@ class ICapture
         virtual int DequeOneBuffer(uint8_t **addr) = 0;
 
         virtual void EnqueOneBuffer(int index) = 0;
+
+        virtual size_t GetImageSize() = 0;
 };
 
 #endif

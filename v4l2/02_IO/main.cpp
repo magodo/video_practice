@@ -17,16 +17,20 @@ int main()
 {
     IFileParser::getInstance()->parseFile("./my_config.ini");
 
-    IFbDev *fb1 = IFbDev::getInstance();
+    IFbDev *fb = IFbDev::getInstance();
     ICapture *cap = ICapture::getInstance();
     
-    fb1->init("/dev/fb1");
+#ifdef MXCFB
+    fb->init("/dev/fb1");
+#else
+    fb->init("/dev/fb0");
+#endif
     cap->Open("/dev/video0");
     cap->Init();
 
 #ifdef MXCFB
-    fb1->setGlobalAlpha(0xff);
-    fb1->unBlank();
+    fb->setGlobalAlpha(0xff);
+    fb->unBlank();
 #endif
 
     cap->StreamOn();
@@ -35,8 +39,8 @@ int main()
     int index;
     size_t fb_size;
 
-    fb_buf = fb1->getVirtualFbAddr();
-    fb_size = fb1->getVirtualFbSize();
+    fb_buf = fb->getVirtualFbAddr();
+    fb_size = cap->GetImageSize();
 
     while (1)
     {

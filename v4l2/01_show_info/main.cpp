@@ -649,7 +649,7 @@ int main()
     //EnumControls(fd);
 
     /* image format */
-    //EnumCaptureImageFormat(fd);
+    EnumCaptureImageFormat(fd);
     ShowCaptureCurrentFormat(fd);
 
     /* crop */

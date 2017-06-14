@@ -132,6 +132,8 @@ void ImplCapture::Init()
         exit(-1);
     }
 
+    image_size_ = format.fmt.pix.sizeimage;
+
     /* Following proves the returned format from VIDIOC_S_FMT
      * is the actual set format. */
 #if 0
@@ -255,7 +257,7 @@ void ImplCapture::QBuffers()
         memset(&buffer, 0, sizeof(buffer));
         buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         buffer.index = i;
-        //buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.memory = V4L2_MEMORY_MMAP;
         if (-1 == ioctl(fd_, VIDIOC_QBUF, &buffer))
         {
             perror("VIDIOC_QBUF");
@@ -267,6 +269,9 @@ void ImplCapture::QBuffers()
 
 void ImplCapture::StreamOn()
 {
+    /* following code only applys to input whose 
+     * capability supprt "standard" interface. */
+#if 0
     v4l2_std_id curr_std_id;
     int counter_keep, counter_elapse;
 
@@ -311,6 +316,7 @@ void ImplCapture::StreamOn()
         std::cerr << "Signal standard is not steady for 5 seconds, quiting..." << std::endl;
         exit(-1);
     }
+#endif
 
     MapBuffers();
 

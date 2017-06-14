@@ -14,6 +14,7 @@ uint32_t IPixFmt::bpp(uint32_t pix_fmt)
     {
         case V4L2_PIX_FMT_UYVY:
         case V4L2_PIX_FMT_RGB565:
+        case V4L2_PIX_FMT_YUYV:
             return 16;
         case  V4L2_PIX_FMT_RGB32:
             return 32;

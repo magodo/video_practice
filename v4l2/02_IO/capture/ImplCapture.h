@@ -38,6 +38,8 @@ class ImplCapture: public ICapture
 
         virtual void EnqueOneBuffer(int index);
 
+        virtual inline size_t GetImageSize() {return image_size_;}
+
     private:
 
         void MapBuffers();
@@ -49,6 +51,7 @@ class ImplCapture: public ICapture
         MmapBuffer *buffers_;
         unsigned int count_;
         v4l2_std_id std_;
+        size_t image_size_;
 };
 
 #endif
