@@ -19,10 +19,6 @@ class ICapture
 
         virtual void Close() = 0;
 
-        virtual void Init() = 0;
-
-        virtual void Deinit() = 0;
-
         virtual void StreamOn() = 0;
 
         virtual void StreamOff() = 0;
@@ -32,7 +28,7 @@ class ICapture
 
         virtual void EnqueOneBuffer(int index) = 0;
 
-        virtual size_t GetImageSize() = 0;
+        virtual size_t GetBufferSize() = 0;
 };
 
 #endif

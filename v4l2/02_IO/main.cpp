@@ -12,6 +12,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/time.h>
 
 using namespace fbdev;
 
@@ -54,7 +55,6 @@ int main()
     fb->init("/dev/fb0");
 #endif
     cap->Open("/dev/video0");
-    cap->Init();
 
 #ifdef MXCFB
     fb->setGlobalAlpha(0xff);
@@ -68,9 +68,13 @@ int main()
     size_t fb_size;
 
     fb_buf = fb->getVirtualFbAddr();
-    fb_size = cap->GetImageSize();
+    fb_size = cap->GetBufferSize();
     std::cout << "image siz: " << fb_size << std::endl;
     std::cout << "fb size: " << fb->getVirtualFbSize() << std::endl;;
+
+    int field_counter = 0;
+    struct timespec tsp_start, tsp_end;
+    clock_gettime(CLOCK_MONOTONIC, &tsp_start);
 
     while (g_is_on)
     {
@@ -80,9 +84,19 @@ int main()
             memcpy(fb_buf, addr, fb_size);
             cap->EnqueOneBuffer(index);
         }
+
+        field_counter++;
+        if (field_counter == 100)
+        {
+            clock_gettime(CLOCK_MONOTONIC, &tsp_end);
+            std::cout << "FPS: " << 100/(tsp_end.tv_sec - tsp_start.tv_sec +
+                         ((double)(tsp_end.tv_nsec-tsp_start.tv_nsec)/1000000000)) << std::endl;
+            field_counter = 0;
+            clock_gettime(CLOCK_MONOTONIC, &tsp_start);
+        }
     }
 
     fb->deinit();
-    cap->Deinit();
+    cap->StreamOff();
     cap->Close();
 }

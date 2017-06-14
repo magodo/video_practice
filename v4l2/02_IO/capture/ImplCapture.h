@@ -25,10 +25,6 @@ class ImplCapture: public ICapture
 
         virtual void Close();
 
-        virtual void Init();
-
-        virtual void Deinit();
-
         virtual void StreamOn();
 
         virtual void StreamOff();
@@ -38,10 +34,14 @@ class ImplCapture: public ICapture
 
         virtual void EnqueOneBuffer(int index);
 
-        virtual inline size_t GetImageSize() {return image_size_;}
+        virtual size_t GetBufferSize(){ return buffer_size_;}
 
     private:
 
+        void Init();
+        void Deinit();
+        void AllocateBuffers();
+        void FreeBuffers();
         void MapBuffers();
         void QBuffers();
         void UnmapBuffers(MmapBuffer *buffers, int count);
@@ -51,7 +51,8 @@ class ImplCapture: public ICapture
         MmapBuffer *buffers_;
         unsigned int count_;
         v4l2_std_id std_;
-        size_t image_size_;
+        size_t buffer_size_;
+        uint32_t input_cap_;
 };
 
 #endif
