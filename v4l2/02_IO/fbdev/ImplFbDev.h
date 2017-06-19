@@ -32,6 +32,7 @@ namespace fbdev
             virtual bool setPixFormat(uint32_t pix_fmt);
             virtual inline uint8_t *getVirtualFbAddr() {return m_fb_buf;}
             virtual inline size_t getVirtualFbSize() {return m_fb_size;} 
+            virtual void renderFrame(uint8_t*, size_t);
 
 #ifdef MXCFB
             virtual bool setGlobalAlpha(uint16_t alpha);

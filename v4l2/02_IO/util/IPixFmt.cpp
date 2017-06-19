@@ -12,11 +12,13 @@ uint32_t IPixFmt::bpp(uint32_t pix_fmt)
 {
     switch (pix_fmt)
     {
-        case V4L2_PIX_FMT_UYVY:
-        case V4L2_PIX_FMT_RGB565:
         case V4L2_PIX_FMT_YUYV:
+        case V4L2_PIX_FMT_UYVY:
+        case V4L2_PIX_FMT_YYUV:
+        case V4L2_PIX_FMT_RGB565:
             return 16;
         case  V4L2_PIX_FMT_RGB32:
+        case  V4L2_PIX_FMT_BGR32:
             return 32;
         default:
             std::cerr << "Not supported format: " <<  fourccToStr(pix_fmt) << std::endl;

@@ -183,18 +183,28 @@ int main(int argc, char *argv[])
 
     // var info
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
-    ioctl(fb_fd, FBIOGET_FSCREENINFO, &finfo);
-    //show_vinfo(&vinfo);
+    //ioctl(fb_fd, FBIOGET_FSCREENINFO, &finfo);
+    show_vinfo(&vinfo);
     //show_finfo(&finfo);
 
 #if 1
 /**
  * This part is for proving when setting 24 for bits_per_pixel, the actual bits_per_pixel is 32
  */
-    vinfo.bits_per_pixel = 32;
-    vinfo.nonstd = V4L2_PIX_FMT_RGB32;   
+    vinfo.xres = 640;
+    vinfo.xres_virtual = 640;
+    vinfo.yres = 480;
+    vinfo.yres_virtual = 480;
+    vinfo.grayscale = 0;
+
+    //vinfo.bits_per_pixel = 16;
+    vinfo.nonstd = V4L2_PIX_FMT_YUYV;
     vinfo.activate = FB_ACTIVATE_NOW;
-    ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vinfo);
+    if (-1 == ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vinfo))
+    {
+        perror("FBIOPUT_VSCREENINFO");
+        exit(-1);
+    }
 
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
     ioctl(fb_fd, FBIOGET_FSCREENINFO, &finfo);

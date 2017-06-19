@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/magodo/github/video_practice/fbdev/all/fbcheck/build",
+  "command": "/usr/bin/c++   -I/home/magodo/github/video_practice/fbdev/all/fbcheck/inc    -o CMakeFiles/fbcheck.dir/fbcheck.cpp.o -c /home/magodo/github/video_practice/fbdev/all/fbcheck/fbcheck.cpp",
+  "file": "/home/magodo/github/video_practice/fbdev/all/fbcheck/fbcheck.cpp"
+}
+]

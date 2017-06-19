@@ -55,6 +55,8 @@ namespace fbdev
 
             virtual size_t getVirtualFbSize() = 0; 
 
+            virtual void renderFrame(uint8_t*, size_t) = 0;
+
 #ifdef MXCFB
             /**
              * @brief       Set global alpha for opened fb.

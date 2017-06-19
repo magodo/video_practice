@@ -153,14 +153,12 @@ int main()
     // var info
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
     vinfo.grayscale = 0;
-    vinfo.bits_per_pixel = 32;
+    //vinfo.bits_per_pixel = 16;
+    vinfo.nonstd = V4L2_PIX_FMT_YUYV;
+    //vinfo.nonstd = V4L2_PIX_FMT_RGB32; 
 
-    vinfo.xres = 1280;
-    vinfo.yres = 720;
-    vinfo.xres_virtual = 1280;
-    vinfo.yres_virtual = 720;
-
-    vinfo.nonstd = V4L2_PIX_FMT_RGB32; 
+    vinfo.xres = vinfo.xres_virtual = 640;
+    vinfo.yres = vinfo.yres_virtual = 480;
 
     ioctl(fb_fd, FBIOPUT_VSCREENINFO, &vinfo);
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);

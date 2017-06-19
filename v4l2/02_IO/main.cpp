@@ -65,12 +65,13 @@ int main()
 
     uint8_t *addr, *fb_buf;
     int index;
-    size_t fb_size;
+    size_t fb_size, img_size;
 
     fb_buf = fb->getVirtualFbAddr();
-    fb_size = cap->GetBufferSize();
-    std::cout << "image siz: " << fb_size << std::endl;
-    std::cout << "fb size: " << fb->getVirtualFbSize() << std::endl;;
+    img_size = cap->GetBufferSize();
+    fb_size = fb->getVirtualFbSize();
+    std::cout << "image size: " << img_size << std::endl;
+    std::cout << "fb size: " << fb_size << std::endl;;
 
     int field_counter = 0;
     struct timespec tsp_start, tsp_end;
@@ -81,7 +82,7 @@ int main()
         index = cap->DequeOneBuffer(&addr);
         if (index >= 0)
         {
-            memcpy(fb_buf, addr, fb_size);
+            fb->renderFrame(addr,img_size);
             cap->EnqueOneBuffer(index);
         }
 

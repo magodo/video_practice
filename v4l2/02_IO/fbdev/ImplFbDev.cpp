@@ -85,6 +85,7 @@ bool ImplFbDev::init(string dev)
 
     /* get-then-put default screen variable info */
 
+    memset(&m_vinfo, 0, sizeof(m_vinfo));
     if (0 != ioctl(m_fd, FBIOGET_VSCREENINFO, &m_vinfo))
     {
         cerr << "Get var screen info failed: " << strerror(errno) << endl;
@@ -97,9 +98,11 @@ bool ImplFbDev::init(string dev)
     m_vinfo.yres = strtol(parser->getInfo()["FB"]["yres"].c_str(), NULL, 10);
     m_vinfo.xres_virtual = strtol(parser->getInfo()["FB"]["xres_virtual"].c_str(), NULL, 10);
     m_vinfo.yres_virtual = strtol(parser->getInfo()["FB"]["yres_virtual"].c_str(), NULL, 10);
-    m_vinfo.xoffset = 0;
-    m_vinfo.yoffset = 0;
+    //m_vinfo.xoffset = 0;
+    //m_vinfo.yoffset = 0;
     m_vinfo.nonstd = IPixFmt::strToFourcc(parser->getInfo()["FB"]["pix_fmt"]);
+    m_vinfo.grayscale = 0;
+    //m_vinfo.bits_per_pixel = IPixFmt::bpp(m_vinfo.nonstd);
 
     if (0 != ioctl(m_fd, FBIOPUT_VSCREENINFO, &m_vinfo))
     {
@@ -120,6 +123,15 @@ bool ImplFbDev::init(string dev)
         cerr << "Get fix screen info failed: " << strerror(errno) << endl;
         return false;
     }
+    std::cout << "xres: " << m_vinfo.xres
+              << "\nxres_virtual: " << m_vinfo.xres_virtual
+              << "\nyres: " << m_vinfo.yres
+              << "\nyres_virtual: " << m_vinfo.yres_virtual
+              << "\nbits_per_pixel: " << m_vinfo.bits_per_pixel
+              << "\nline_length: " << m_finfo.line_length
+              << "\ngrayscale: " << m_vinfo.grayscale
+              << "\nnonstd: " << IPixFmt::fourccToStr(m_vinfo.nonstd)
+              << std::endl;
 
     /* mmap fb */
     m_fb_size = m_vinfo.yres_virtual * m_finfo.line_length;
@@ -204,6 +216,23 @@ bool ImplFbDev::setPixFormat(uint32_t pix_fmt)
     }
 
     return true;
+}
+
+void ImplFbDev::renderFrame(uint8_t *src_addr, size_t size)
+{
+    int x, y, i, count;
+    for (y = 0; (y < m_vinfo.yres_virtual); y++)
+        for (x = 0; x < m_vinfo.xres_virtual ; ++x)
+        {
+            long offset = (y*m_finfo.line_length) + (x * m_vinfo.bits_per_pixel/8);
+            for (i = 0; i < m_vinfo.bits_per_pixel/8; i++) 
+            {
+                if (IPixFmt::bpp(m_vinfo.nonstd) < (i+1)*8)
+                    *(m_fb_buf+offset+i) = src_addr[count++];
+                else
+                    *(m_fb_buf+offset+i) = 0x00;
+            }
+        }
 }
 
 #ifdef MXCFB

@@ -196,8 +196,6 @@ int ImplCapture::DequeOneBuffer(uint8_t **addr)
             exit(-1);
         }
     }
-    std::cout << "Used byte in buffer: " << buffer.bytesused << std::endl;
-    std::cout << "Sequence: " << buffer.sequence << std::endl;
     if (addr != nullptr)
         *addr = static_cast<uint8_t*>(buffers_[buffer.index].start);
     return buffer.index;
