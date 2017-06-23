@@ -220,14 +220,15 @@ bool ImplFbDev::setPixFormat(uint32_t pix_fmt)
 
 void ImplFbDev::renderFrame(uint8_t *src_addr, size_t size)
 {
-    int x, y, i, count;
+    unsigned int x, y, i, count;
+    count = 0;
     for (y = 0; (y < m_vinfo.yres_virtual); y++)
         for (x = 0; x < m_vinfo.xres_virtual ; ++x)
         {
             long offset = (y*m_finfo.line_length) + (x * m_vinfo.bits_per_pixel/8);
             for (i = 0; i < m_vinfo.bits_per_pixel/8; i++) 
             {
-                if (IPixFmt::bpp(m_vinfo.nonstd) < (i+1)*8)
+                if (IPixFmt::bpp(m_vinfo.nonstd)/8 > i)
                     *(m_fb_buf+offset+i) = src_addr[count++];
                 else
                     *(m_fb_buf+offset+i) = 0x00;

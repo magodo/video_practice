@@ -82,7 +82,8 @@ int main()
         index = cap->DequeOneBuffer(&addr);
         if (index >= 0)
         {
-            fb->renderFrame(addr,img_size);
+            memcpy(fb_buf, addr, img_size);
+            //fb->renderFrame(addr,img_size); // low FPS
             cap->EnqueOneBuffer(index);
         }
 

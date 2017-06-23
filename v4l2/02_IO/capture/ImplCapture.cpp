@@ -130,6 +130,7 @@ void ImplCapture::StreamOn()
             }
             else 
             {
+                std::cout << "Current standard: 0x" << std::hex << curr_std_id <<  std::dec << std::endl;
                 std_ = curr_std_id;
                 counter_keep = 0;
 

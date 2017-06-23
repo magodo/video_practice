@@ -639,17 +639,19 @@ int main()
 
     /* standard */
     /* (my thinkpad-t460p's camera doesn't has the capability to set standard) */
+    /* (i.MX6 could get/set standard, but couldn't enumerate it.) */
 
     //ShowCurrentStandard(fd);
     //EnumSupportedStandard(fd);
 
     /* control */
+    /* (i.MX6 don't support query control) */
 
     //EnumControls_Old(fd);
     //EnumControls(fd);
 
     /* image format */
-    EnumCaptureImageFormat(fd);
+    //EnumCaptureImageFormat(fd); (i.MX6 doesn't support enum format)
     ShowCaptureCurrentFormat(fd);
 
     /* crop */
