@@ -82,6 +82,30 @@ void show_vinfo(struct fb_var_screeninfo *vinfo)
     cout << ss.str();
 }
 
+std::string fourccToStr(uint32_t pix_fmt)
+{
+    std::string str;
+    str.insert(0,1, (pix_fmt>>24) & 0xff);
+    str.insert(0,1, (pix_fmt>>16) & 0xff);
+    str.insert(0,1, (pix_fmt>>8) & 0xff);
+    str.insert(0,1, (pix_fmt) & 0xff);
+    return str;
+}
+
+#if 0
+unsigned int bpp(uint32_t fourcc)
+{
+    switch(fourcc)
+    {
+        case V4L2_PIX_FMT_YUYV:
+            return 16;
+        default:
+            std::cerr << "Unknown format: " <<  fourccToStr(fourcc) << std::endl;
+            exit(-1);
+    }
+}
+#endif
+
 /**
  * Draw a pixel at (x,y).
  *
@@ -99,6 +123,7 @@ void draw_point(long x, long y, uint64_t pixel, struct fb_fix_screeninfo &finfo,
     assert( (x < vinfo.xres) && (y < vinfo.yres) );
 
     long offset = (y*finfo.line_length) + (x*vinfo.bits_per_pixel/8);
+    //switch (bpp(vinfo.nonstd))
     switch (vinfo.bits_per_pixel)
     {
         case 8:
@@ -154,7 +179,7 @@ int main()
     ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo);
     vinfo.grayscale = 0;
     //vinfo.bits_per_pixel = 16;
-    vinfo.nonstd = V4L2_PIX_FMT_YUYV;
+    vinfo.nonstd = V4L2_PIX_FMT_YUYV; // although setting format to YUYV, but seems still using RGB32
     //vinfo.nonstd = V4L2_PIX_FMT_RGB32; 
 
     vinfo.xres = vinfo.xres_virtual = 640;
@@ -175,6 +200,6 @@ int main()
     // draw something
     for (int x = 0; x < vinfo.xres; ++x)    
         for (int y = 0; y < vinfo.yres; ++y)
-            draw_point(x, y, pixel_color(0x00, 0x00, 0xff, vinfo), finfo, vinfo, fbp);
+            draw_point(x, y, 0x0, finfo, vinfo, fbp);
     sleep(5);
 }

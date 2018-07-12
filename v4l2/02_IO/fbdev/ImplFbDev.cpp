@@ -228,7 +228,7 @@ void ImplFbDev::renderFrame(uint8_t *src_addr, size_t size)
             long offset = (y*m_finfo.line_length) + (x * m_vinfo.bits_per_pixel/8);
             for (i = 0; i < m_vinfo.bits_per_pixel/8; i++) 
             {
-                if (IPixFmt::bpp(m_vinfo.nonstd)/8 > i)
+                if (IPixFmt::bpp(m_vinfo.nonstd)/8 <= i)
                     *(m_fb_buf+offset+i) = src_addr[count++];
                 else
                     *(m_fb_buf+offset+i) = 0x00;
